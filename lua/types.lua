@@ -1,0 +1,6 @@
+---@class Config
+---@field public delimiters table<string, number>
+--
+---@class Selection
+---@field public start table<string, number>
+---@field public stop table<string, number>
