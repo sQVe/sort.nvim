@@ -1,18 +1,20 @@
 local config = {}
 
----@type Config
+--- @type Config
 local defaults = {}
-defaults.delimiters = { [','] = 1 }
+defaults.delimiters = { ',', '|', '%s' }
 
 local user_config = defaults
 
--- Get user config.
-config.get_config = function()
+--- Get user config.
+--- @return Config user_config
+config.get_user_config = function()
   return user_config
 end
 
--- Setup config by applying config overries on default config.
----@param overrides Config
+--- Setup user config by merging defaults and overrides.
+--- @param overrides Config
+--- @return Config user_config
 config.setup = function(overrides)
   user_config = vim.tbl_deep_extend('force', defaults, overrides)
 
