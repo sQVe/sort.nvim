@@ -1,15 +1,17 @@
-local config = require('config')
-local utils = require('utils')
+local config = require('sort.config')
+local interface = require('sort.interface')
+local sort = require('sort.sort')
+local utils = require('sort.utils')
 
-local sort = {}
+local M = {}
 
-sort.setup = config.setup
+M.setup = config.setup
 
 --- Sort by either lines or specified delimiters.
-sort.sort = function(...)
+M.sort = function(...)
   -- TODO: Parse the options.
   local input = table.concat({ ... }, ' ')
-  local selection = utils.get_visual_selection()
+  local selection = interface.get_visual_selection()
   local is_multiple_lines_selected = selection.start.row < selection.stop.row
 
   if is_multiple_lines_selected then
@@ -17,7 +19,7 @@ sort.sort = function(...)
   else
     -- TODO: Support !, i and u.
     local user_config = config.get_user_config()
-    local text = utils.get_text_between_columns(selection)
+    local text = interface.get_text_between_columns(selection)
 
     local matches, sorted_words
     for _, delimiter in ipairs(user_config.delimiters) do
@@ -25,7 +27,7 @@ sort.sort = function(...)
       local delimiterCount = #matches - 1
 
       if delimiterCount > 0 then
-        sorted_words = utils.convert_to_words_list(matches)
+        sorted_words = sort.convert_to_words_list(matches)
         break
       end
     end
@@ -38,4 +40,4 @@ sort.sort = function(...)
   end
 end
 
-return sort
+return M
