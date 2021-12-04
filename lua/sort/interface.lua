@@ -1,5 +1,12 @@
 local M = {}
 
+--- Execute builtin sort command on range.
+--- @param bang string
+--- @param arguments string
+M.execute_builtin_sort = function(bang, arguments)
+  vim.api.nvim_command('\'<,\'>sort' .. bang .. ' ' .. arguments)
+end
+
 --- Get text between two columns.
 --- @param selection Selection
 --- @return string text
@@ -32,6 +39,33 @@ M.get_visual_selection = function()
   end
 
   return selection
+end
+
+--- Set text for selection.
+--- @param selection Selection
+--- @param text string
+M.set_line_text = function(selection, text)
+  print(vim.inspect(selection))
+
+  -- Check if using virtual line selection.
+  if selection.stop.column == 2147483647 then
+    vim.api.nvim_buf_set_lines(
+      0,
+      selection.start.row - 1,
+      selection.stop.row,
+      false,
+      { text }
+    )
+  else
+    vim.api.nvim_buf_set_text(
+      0,
+      selection.start.row - 1,
+      selection.start.column - 1,
+      selection.stop.row - 1,
+      selection.stop.column,
+      { text }
+    )
+  end
 end
 
 return M

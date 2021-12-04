@@ -1,1 +1,3 @@
-vim.cmd [[ command -nargs=* -range Sort :lua require('sort').sort(<f-args>) ]]
+vim.cmd(
+  [[ command -nargs=* -bang -range Sort :lua require('sort').sort("<bang>", <q-args>) ]]
+)
