@@ -11,7 +11,6 @@ M.setup = config.setup
 --- @param bang string
 --- @param arguments string
 M.sort = function(bang, arguments)
-  -- TODO: Parse the options.
   local selection = interface.get_visual_selection()
   local is_multiple_lines_selected = selection.start.row < selection.stop.row
 
