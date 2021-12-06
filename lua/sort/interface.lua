@@ -1,5 +1,7 @@
 local M = {}
 
+local maximum_line_length = 2147483647
+
 --- Execute builtin sort command on range.
 --- @param bang string
 --- @param arguments string
@@ -45,10 +47,8 @@ end
 --- @param selection Selection
 --- @param text string
 M.set_line_text = function(selection, text)
-  print(vim.inspect(selection))
-
   -- Check if using virtual line selection.
-  if selection.stop.column == 2147483647 then
+  if selection.stop.column == maximum_line_length then
     vim.api.nvim_buf_set_lines(
       0,
       selection.start.row - 1,
