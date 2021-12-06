@@ -9,11 +9,8 @@
 --- @field public start SelectionFragment
 --- @field public stop SelectionFragment
 
---- @class SortedWord
---- @field public index number
---- @field public text string
-
 --- @class SortOptions
+--- @field public delimiter string
 --- @field public ignore_case boolean
 --- @field public reverse boolean
 --- @field public unique boolean

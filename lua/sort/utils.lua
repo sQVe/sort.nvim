@@ -1,36 +1,54 @@
 local M = {}
 
---- TODO: Description.
---- @param matches string[]
---- @return SortedWord[] sorted_words
-M.convert_to_words_list = function(matches)
-  local sorted_words = {}
+local leadingWhitespacePattern = '^%s+'
+local trailingWhitespacePattern = '%s+$'
 
-  for idx, match in ipairs(matches) do
-    table.insert(sorted_words, {
-      index = idx,
-      text = M.trim_leading_and_trailing_whitespace(match),
-    })
-  end
+--- Get leading whitespaces.
+--- @param text string
+--- @return string
+M.get_leading_whitespace = function(text)
+  local leadingWhitespace = string.match(text, leadingWhitespacePattern)
 
-  table.sort(sorted_words, function(a, b)
-    return a.text < b.text
-  end)
-
-  return sorted_words
+  return leadingWhitespace or ''
 end
 
---- TODO: Description.
+--- Get trailing whitespaces.
+--- @param text string
+--- @return string
+M.get_trailing_whitespace = function(text)
+  local trailingWhitespace = string.match(text, trailingWhitespacePattern)
+
+  return trailingWhitespace or ''
+end
+
+--- Parse options provided via bang and/or arguments.
 --- @param bang string
 --- @param arguments string
 --- @return SortOptions options
 M.parse_arguments = function(bang, arguments)
-  local raw_options = M.split_by_delimiter(arguments, '%s')[1] or ''
+  local delimiter, option_keys = string.match(arguments, '(.*)%s(.*)')
+
+  -- TODO: Custom delimiter allowed as `s`, `t` or `%p`.
+  -- Mimic pattern so we can match the delimiter.
+
+  if delimiter == nil then
+    if string.match(arguments, '^[ui%s]+$') then
+      option_keys = arguments
+    else
+      delimiter = arguments
+    end
+  end
+
+  delimiter = string.sub(delimiter, 1, 1)
+
+  print(vim.inspect(delimiter), vim.inspect(option_keys))
 
   local options = {}
-  options.ignore_case = string.match(raw_options, 'i') == 'i'
+
+  options.delimiter = delimiter
+  options.ignore_case = string.match(option_keys, 'i') == 'i'
   options.reverse = bang == '!'
-  options.unique = string.match(raw_options, 'u') == 'u'
+  options.unique = string.match(option_keys, 'u') == 'u'
 
   return options
 end
@@ -41,26 +59,32 @@ end
 --- @return string[] matches
 M.split_by_delimiter = function(text, delimiter)
   local matches = {}
-  local delimiterRe = '([^' .. delimiter .. ']+)'
+  local notDelimiterPattern = '([^' .. delimiter .. ']+)'
 
-  if delimiter then
-    string.gsub(text, delimiterRe, function(match)
-      table.insert(matches, match)
-    end)
-  end
+  string.gsub(text, notDelimiterPattern, function(match)
+    table.insert(matches, match)
+  end)
 
   return matches
 end
 
---- TODO: Description.
+--- Trim escaped backslash.
+--- @param text string
+--- @return string
+M.trim_escaped_backslash = function(text)
+  local escapedBackslashPattern = '\\'
+
+  text = string.gsub(text, escapedBackslashPattern, '')
+
+  return text
+end
+
+--- Trim leading and trailing whitespaces.
 --- @param text string
 --- @return string
 M.trim_leading_and_trailing_whitespace = function(text)
-  local leadingWhitespaceRe = '^%s+'
-  local trailingWhitespaceRe = '%s+$'
-
-  text = string.gsub(text, leadingWhitespaceRe, '')
-  text = string.gsub(text, trailingWhitespaceRe, '')
+  text = string.gsub(text, leadingWhitespacePattern, '')
+  text = string.gsub(text, trailingWhitespacePattern, '')
 
   return text
 end
