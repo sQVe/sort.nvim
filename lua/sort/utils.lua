@@ -52,6 +52,19 @@ M.split_by_delimiter = function(text, translated_delimiter)
   return matches
 end
 
+--- Reverse a table.
+--- @param table string[]
+--- @return string[] reversed_table
+M.reverse_table = function(table)
+  local reversed_table = {}
+
+  for i = #table, 1, -1 do
+    reversed_table[#reversed_table + 1] = table[i]
+  end
+
+  return reversed_table
+end
+
 --- Translate delimiter values to proper characters.
 --- @param delimiter string
 --- @return string translated_delimiter

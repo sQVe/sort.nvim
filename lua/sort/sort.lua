@@ -71,6 +71,10 @@ M.delimiter_sort = function(text, options)
     return text
   end
 
+  if options.reverse then
+    sorted_words = utils.reverse_table(sorted_words)
+  end
+
   local sorted_fragments = {}
   for idx, sorted_word in ipairs(sorted_words) do
     table.insert(
