@@ -72,7 +72,10 @@ M.delimiter_sort = function(text, options)
   end
 
   if options.reverse then
+    leading_whitespaces = utils.reverse_table(leading_whitespaces)
     sorted_words = utils.reverse_table(sorted_words)
+    trailing_whitespaces = utils.reverse_table(trailing_whitespaces)
+  end
   end
 
   local sorted_fragments = {}
