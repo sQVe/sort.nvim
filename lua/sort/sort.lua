@@ -49,12 +49,13 @@ end
 --- @return string sorted_text
 M.delimiter_sort = function(text, options)
   local user_config = config.get_user_config()
+  local delimiters = options.delimiter and { options.delimiter }
+    or user_config.delimiters
 
-  local leading_whitespaces, matches, sorted_words, top_delimiter, trailing_whitespaces
-
-  for _, delimiter in ipairs(options.delimiter and { options.delimiter } or user_config.delimiters) do
-    top_delimiter = delimiter
-    matches = utils.split_by_delimiter(text, delimiter)
+  local leading_whitespaces, matches, sorted_words, top_translated_delimiter, trailing_whitespaces
+  for _, delimiter in ipairs(delimiters) do
+    top_translated_delimiter = utils.translate_delimiter(delimiter)
+    matches = utils.split_by_delimiter(text, top_translated_delimiter)
     local delimiterCount = #matches - 1
 
     if delimiterCount > 0 then
@@ -66,10 +67,8 @@ M.delimiter_sort = function(text, options)
     end
   end
 
-  print(vim.inspect(sorted_words))
-
   if sorted_words == nil then
-    return
+    return text
   end
 
   local sorted_fragments = {}
@@ -80,9 +79,7 @@ M.delimiter_sort = function(text, options)
     )
   end
 
-  -- TODO: Support options.
-
-  return table.concat(sorted_fragments, top_delimiter)
+  return table.concat(sorted_fragments, top_translated_delimiter)
 end
 
 --- Sort by line, using the default :sort.

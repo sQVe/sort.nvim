@@ -7,8 +7,8 @@ defaults.delimiters = {
   '|',
   ';',
   ':',
-  ' ', -- Space.
-  '\t', -- Tab.
+  's',
+  't',
 }
 
 local user_config = defaults

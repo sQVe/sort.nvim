@@ -26,46 +26,42 @@ end
 --- @param arguments string
 --- @return SortOptions options
 M.parse_arguments = function(bang, arguments)
-  local delimiter, option_keys = string.match(arguments, '(.*)%s(.*)')
-
-  -- TODO: Custom delimiter allowed as `s`, `t` or `%p`.
-  -- Mimic pattern so we can match the delimiter.
-
-  if delimiter == nil then
-    if string.match(arguments, '^[ui%s]+$') then
-      option_keys = arguments
-    else
-      delimiter = arguments
-    end
-  end
-
-  delimiter = string.sub(delimiter, 1, 1)
-
-  print(vim.inspect(delimiter), vim.inspect(option_keys))
-
+  local delimiter = string.match(arguments, '[st%p]')
   local options = {}
 
   options.delimiter = delimiter
-  options.ignore_case = string.match(option_keys, 'i') == 'i'
+  options.ignore_case = string.match(arguments, 'i') == 'i'
   options.reverse = bang == '!'
-  options.unique = string.match(option_keys, 'u') == 'u'
+  options.unique = string.match(arguments, 'u') == 'u'
 
   return options
 end
 
---- Split by delimiter
+--- Split by translated delimiter.
 --- @param text string
---- @param delimiter string
+--- @param translated_delimiter string
 --- @return string[] matches
-M.split_by_delimiter = function(text, delimiter)
+M.split_by_delimiter = function(text, translated_delimiter)
   local matches = {}
-  local notDelimiterPattern = '([^' .. delimiter .. ']+)'
+  local notDelimiterPattern = '([^' .. translated_delimiter .. ']+)'
 
   string.gsub(text, notDelimiterPattern, function(match)
     table.insert(matches, match)
   end)
 
   return matches
+end
+
+--- Translate delimiter values to proper characters.
+--- @param delimiter string
+--- @return string translated_delimiter
+M.translate_delimiter = function(delimiter)
+  local translateMap = {
+    t = '\t',
+    s = ' ',
+  }
+
+  return translateMap[delimiter] or delimiter
 end
 
 --- Trim escaped backslash.
