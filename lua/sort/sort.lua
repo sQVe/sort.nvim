@@ -72,18 +72,30 @@ M.delimiter_sort = function(text, options)
   end
 
   if options.reverse then
-    leading_whitespaces = utils.reverse_table(leading_whitespaces)
-    sorted_words = utils.reverse_table(sorted_words)
-    trailing_whitespaces = utils.reverse_table(trailing_whitespaces)
-  end
+    leading_whitespaces = utils.reverse_list(leading_whitespaces)
+    sorted_words = utils.reverse_list(sorted_words)
+    trailing_whitespaces = utils.reverse_list(trailing_whitespaces)
   end
 
   local sorted_fragments = {}
-  for idx, sorted_word in ipairs(sorted_words) do
-    table.insert(
-      sorted_fragments,
-      leading_whitespaces[idx] .. sorted_word .. trailing_whitespaces[idx]
-    )
+  if options.unique then
+    local unique_indexes = utils.find_unique_indexes(sorted_words)
+
+    for _, idx in ipairs(unique_indexes) do
+      table.insert(
+        sorted_fragments,
+        leading_whitespaces[idx]
+          .. sorted_words[idx]
+          .. trailing_whitespaces[idx]
+      )
+    end
+  else
+    for idx, sorted_word in ipairs(sorted_words) do
+      table.insert(
+        sorted_fragments,
+        leading_whitespaces[idx] .. sorted_word .. trailing_whitespaces[idx]
+      )
+    end
   end
 
   return table.concat(sorted_fragments, top_translated_delimiter)

@@ -52,17 +52,17 @@ M.split_by_delimiter = function(text, translated_delimiter)
   return matches
 end
 
---- Reverse a table.
---- @param table string[]
---- @return string[] reversed_table
-M.reverse_table = function(table)
-  local reversed_table = {}
+--- Reverse a list.
+--- @param list string[]
+--- @return string[] reversed_list
+M.reverse_list = function(list)
+  local reversed_list = {}
 
-  for i = #table, 1, -1 do
-    reversed_table[#reversed_table + 1] = table[i]
+  for i = #list, 1, -1 do
+    reversed_list[#reversed_list + 1] = list[i]
   end
 
-  return reversed_table
+  return reversed_list
 end
 
 --- Translate delimiter values to proper characters.
@@ -96,6 +96,24 @@ M.trim_leading_and_trailing_whitespace = function(text)
   text = string.gsub(text, trailingWhitespacePattern, '')
 
   return text
+end
+
+--- Find all indexes in a list that holds a unique value.
+--- @param list string[]
+--- @return number[] unique_indexes
+M.find_unique_indexes = function(list)
+  local unique_indexes = {}
+  local value_map = {}
+
+  for idx, value in ipairs(list) do
+    if value_map[value] == nil then
+      value_map[value] = true
+
+      table.insert(unique_indexes, idx)
+    end
+  end
+
+  return unique_indexes
 end
 
 return M
