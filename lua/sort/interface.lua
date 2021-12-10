@@ -37,7 +37,7 @@ M.get_visual_selection = function()
 
   if is_selection_inversed then
     selection.start = { row = erow, column = ecol }
-    selection.stop = { row = scol, column = scol }
+    selection.stop = { row = srow, column = scol }
   end
 
   return selection
