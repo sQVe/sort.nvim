@@ -26,11 +26,29 @@ end
 --- @param arguments string
 --- @return SortOptions options
 M.parse_arguments = function(bang, arguments)
-  local delimiter = string.match(arguments, '[st%p]')
+  local delimiterPattern = '[st%p]'
+  local numericalPattern = '[bnox]'
   local options = {}
+
+  local delimiter = string.match(arguments, delimiterPattern)
+  local numerical
+  for match in string.gmatch(arguments, numericalPattern) do
+    if match == 'b' then
+      numerical = 2
+    elseif match == 'o' then
+      numerical = 8
+    elseif match == 'x' then
+      numerical = 16
+    else
+      numerical = 10
+    end
+
+    break
+  end
 
   options.delimiter = delimiter
   options.ignore_case = string.match(arguments, 'i') == 'i'
+  options.numerical = numerical
   options.reverse = bang == '!'
   options.unique = string.match(arguments, 'u') == 'u'
 
