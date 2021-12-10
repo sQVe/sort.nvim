@@ -2,14 +2,7 @@ local M = {}
 
 --- @type Config
 local defaults = {}
-defaults.delimiters = {
-  ',',
-  '|',
-  ';',
-  ':',
-  's',
-  't',
-}
+defaults.delimiters = { ',', '|', ';', ':', 's', 't' }
 
 local user_config = defaults
 
