@@ -111,3 +111,4 @@ Please _consider_ the following before making a **PR**:
   - [ ] `o` option to sort by octal (8).
   - [ ] `x` option to sort by hexidecimal (16).
 - [ ] Decent test coverage.
+- [ ] Natural Sorting.
