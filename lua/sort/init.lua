@@ -14,6 +14,10 @@ M.sort = function(bang, arguments)
   local selection = interface.get_visual_selection()
   local is_multiple_lines_selected = selection.start.row < selection.stop.row
 
+  if selection.start.row == 0 then
+    return
+  end
+
   if is_multiple_lines_selected then
     sort.line_sort(bang, arguments)
   else
