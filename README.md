@@ -2,8 +2,6 @@
 
 **Sort** is a sorting plugin for [Neovim](https://neovim.io) which provides a simple command that mimics `:sort` and supports both line-wise and delimiter sorting. **Sort** intelligently picks a sorting strategy, by using a configurable priority list, which minimizes manual input and should cover most sorting cases by simply running `:Sort` on a range.
 
-
-
 ## ❓ Why
 
 - Delimiter sorting.
@@ -107,4 +105,9 @@ Please _consider_ the following before making a **PR**:
 
 ## 🏁 Roadmap
 
+- [ ] Extend support for delimiter sorting, mirroring `:sort` options:
+  - [ ] `b` option to sort by binary (2).
+  - [ ] `n` option to sort by decimal (10).
+  - [ ] `o` option to sort by octal (8).
+  - [ ] `x` option to sort by hexidecimal (16).
 - [ ] Decent test coverage.
