@@ -105,10 +105,10 @@ Please _consider_ the following before making a **PR**:
 
 ## 🏁 Roadmap
 
-- [ ] Extend support for delimiter sorting, mirroring `:sort` options:
-  - [ ] `b` option to sort by binary (2).
-  - [ ] `n` option to sort by decimal (10).
-  - [ ] `o` option to sort by octal (8).
-  - [ ] `x` option to sort by hexidecimal (16).
+- [x] Extend support for delimiter sorting, mirroring `:sort` options:
+  - [x] `b` option to sort by binary (2).
+  - [x] `n` option to sort by decimal (10).
+  - [x] `o` option to sort by octal (8).
+  - [x] `x` option to sort by hexidecimal (16).
 - [ ] Decent test coverage.
 - [ ] Natural Sorting.
