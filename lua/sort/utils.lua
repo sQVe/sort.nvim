@@ -3,6 +3,35 @@ local M = {}
 local leadingWhitespacePattern = '^%s+'
 local trailingWhitespacePattern = '%s+$'
 
+--- Parse numbers from string.
+--- @param text string
+--- @param base? number
+--- @return number | nil
+M.parse_number = function(text, base)
+  local binaryPattern = '%d+'
+  local digitPattern = '%-?[%d.]+'
+  local hexPattern = '(%-?)(%x+)'
+  local hexPrefixPattern = '(%-?)0[xX](%x+)'
+
+  local match
+  if base == 2 then
+    match = string.match(text, binaryPattern)
+  elseif base == 16 then
+    local minus, hexMatch
+
+    minus, hexMatch = string.match(text, hexPrefixPattern)
+    if minus == nil then
+      minus, hexMatch = string.match(text, hexPattern)
+    end
+
+    match = (minus or '') .. (hexMatch or '')
+  else
+    match = string.match(text, digitPattern)
+  end
+
+  return tonumber(match or '', base ~= 10 and base or nil)
+end
+
 --- Get leading whitespaces.
 --- @param text string
 --- @return string
@@ -26,11 +55,29 @@ end
 --- @param arguments string
 --- @return SortOptions options
 M.parse_arguments = function(bang, arguments)
-  local delimiter = string.match(arguments, '[st%p]')
+  local delimiterPattern = '[st%p]'
+  local numericalPattern = '[bnox]'
   local options = {}
+
+  local delimiter = string.match(arguments, delimiterPattern)
+  local numerical
+  for match in string.gmatch(arguments, numericalPattern) do
+    if match == 'b' then
+      numerical = 2
+    elseif match == 'o' then
+      numerical = 8
+    elseif match == 'x' then
+      numerical = 16
+    else
+      numerical = 10
+    end
+
+    break
+  end
 
   options.delimiter = delimiter
   options.ignore_case = string.match(arguments, 'i') == 'i'
+  options.numerical = numerical
   options.reverse = bang == '!'
   options.unique = string.match(arguments, 'u') == 'u'
 

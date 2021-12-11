@@ -10,7 +10,8 @@
 --- @field public stop SelectionFragment
 
 --- @class SortOptions
---- @field public delimiter string
+--- @field public delimiter? string
 --- @field public ignore_case boolean
+--- @field public numerical? number
 --- @field public reverse boolean
 --- @field public unique boolean
