@@ -6,9 +6,9 @@ local M = {}
 
 --- Get sorted words (text without leading and trailing whitespace).
 --- @param matches string[]
---- @param ignore_case? boolean
+--- @param options SortOptions
 --- @return string[] sorted_words
-M.get_sorted_words = function(matches, ignore_case)
+M.get_sorted_words = function(matches, options)
   local sorted_words = {}
 
   for _, match in ipairs(matches) do
@@ -19,8 +19,21 @@ M.get_sorted_words = function(matches, ignore_case)
   end
 
   table.sort(sorted_words, function(a, b)
-    a = ignore_case and string.lower(a) or a
-    b = ignore_case and string.lower(b) or b
+    a = options.ignore_case and string.lower(a) or a
+    b = options.ignore_case and string.lower(b) or b
+
+    if options.numerical then
+      local na = utils.parse_number(a, options.numerical)
+      local nb = utils.parse_number(b, options.numerical)
+
+      if na and nb then
+        return na < nb
+      elseif na then
+        return false
+      elseif nb then
+        return true
+      end
+    end
 
     return a < b
   end)
@@ -62,7 +75,7 @@ M.delimiter_sort = function(text, options)
       leading_whitespaces, trailing_whitespaces = M.get_whitespaces_around_word(
         matches
       )
-      sorted_words = M.get_sorted_words(matches, options.ignore_case)
+      sorted_words = M.get_sorted_words(matches, options)
       break
     end
   end
