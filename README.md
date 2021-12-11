@@ -79,7 +79,7 @@ Sorting with **Sort** is easy via the provided `:Sort` command. Two different st
 - Single line
 
   ```
-  :[range]Sort[!] [delimiter][i][u]
+  :[range]Sort[!] [delimiter][b][i][n][o][u][x]
   ```
 
   - With `[!]` the sort order is reversed.
@@ -90,10 +90,18 @@ Sorting with **Sort** is easy via the provided `:Sort` command. Two different st
     - `s`: Space
     - `t`: Tab
 
+  - With `[b]` sorting is done on the first binary number in the word.
+
   - With `[i]` case is ignored.
+
+  - With `[n]` sorting is done on the first decimal number in the word.
+
+  - With `[o]` sorting is done on the first octal number in the word.
 
   - With `[u]` only keep the first instance of words within selection.
     **_Note_** leading and trailing white space isn't considered when testing for uniqueness.
+
+  - With `[x]` sorting is done on the first hexadecimal number the word. A leading `0x` or `0X` is ignored.
 
 ## 🤝 Contributing
 
