@@ -108,7 +108,7 @@ Sorting with **Sort** is easy via the provided `:Sort` command. Two different st
 **Sort** does not by default set any keybindings. The following example sets `go`, which you can change to whatever you choose, to trigger `:Sort`:
 
 ```vim
--- Vim Script.
+" Vim Script.
 
 nnoremap <silent> go <Cmd>Sort<CR>
 vnoremap <silent> go <Esc><Cmd>Sort<CR>
