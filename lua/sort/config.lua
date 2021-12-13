@@ -16,6 +16,7 @@ end
 --- @param overrides Config
 --- @return Config user_config
 M.setup = function(overrides)
+  overrides = overrides or {}
   user_config = vim.tbl_deep_extend('force', defaults, overrides)
 
   return user_config
