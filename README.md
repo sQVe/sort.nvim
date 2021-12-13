@@ -103,6 +103,22 @@ Sorting with **Sort** is easy via the provided `:Sort` command. Two different st
 
   - With `[x]` sorting is done on the first hexadecimal number the word. A leading `0x` or `0X` is ignored.
 
+## Keybinding
+
+**Sort** does not by default set any keybindings. The following example sets `go`, which you can change to whatever you choose, to trigger `:Sort`:
+
+```vim
+nnoremap <silent> go <Cmd>Sort<CR>
+vnoremap <silent> go <Esc><Cmd>Sort<CR>
+```
+
+```lua
+vim.cmd([[
+  nnoremap <silent> go <Cmd>Sort<CR>
+  vnoremap <silent> go <Esc><Cmd>Sort<CR>
+]])
+```
+
 ## 🤝 Contributing
 
 All contributions are great and highly appreciated, be it a bug, fix or feature request. Don't hesitate to reach out via the [issue tracker](https://github.com/sQVe/sort.nvim/issues).
