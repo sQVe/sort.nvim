@@ -16,7 +16,7 @@
 #### [packer](https://github.com/wbthomason/packer.nvim)
 
 ```lua
--- Lua
+-- Lua.
 
 use({
   'sQVe/sort.nvim',
@@ -34,7 +34,7 @@ use({
 #### [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```vim
-" Vim Script
+" Vim Script.
 
 Plug 'sQVe/sort.nvim'
 
@@ -103,16 +103,20 @@ Sorting with **Sort** is easy via the provided `:Sort` command. Two different st
 
   - With `[x]` sorting is done on the first hexadecimal number the word. A leading `0x` or `0X` is ignored.
 
-## Keybinding
+## ⌨️ Keybinding
 
 **Sort** does not by default set any keybindings. The following example sets `go`, which you can change to whatever you choose, to trigger `:Sort`:
 
 ```vim
+-- Vim Script.
+
 nnoremap <silent> go <Cmd>Sort<CR>
 vnoremap <silent> go <Esc><Cmd>Sort<CR>
 ```
 
 ```lua
+-- Lua.
+
 vim.cmd([[
   nnoremap <silent> go <Cmd>Sort<CR>
   vnoremap <silent> go <Esc><Cmd>Sort<CR>
