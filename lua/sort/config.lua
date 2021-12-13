@@ -13,11 +13,10 @@ M.get_user_config = function()
 end
 
 --- Setup user config by merging defaults and overrides.
---- @param overrides Config
+--- @param overrides? Config
 --- @return Config user_config
 M.setup = function(overrides)
-  overrides = overrides or {}
-  user_config = vim.tbl_deep_extend('force', defaults, overrides)
+  user_config = vim.tbl_deep_extend('force', defaults, overrides or {})
 
   return user_config
 end
