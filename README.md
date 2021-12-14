@@ -123,6 +123,19 @@ vim.cmd([[
 ]])
 ```
 
+A common workflow, before sorting, is to visually select inside a set of characters with `vi<character>`. Instead of doing that manually before running **Sort** you could add the keybindings like:
+
+```vim
+" Vim Script.
+
+nnoremap <silent> go" vi"<Esc><Cmd>Sort<CR>
+nnoremap <silent> go' vi'<Esc><Cmd>Sort<CR>
+nnoremap <silent> go( vi(<Esc><Cmd>Sort<CR>
+nnoremap <silent> go[ vi[<Esc><Cmd>Sort<CR>
+nnoremap <silent> gop vip<Esc><Cmd>Sort<CR>
+nnoremap <silent> go{ vi{<Esc><Cmd>Sort<CR>
+```
+
 ## 🤝 Contributing
 
 All contributions are great and highly appreciated, be it a bug, fix or feature request. Don't hesitate to reach out via the [issue tracker](https://github.com/sQVe/sort.nvim/issues).
