@@ -153,3 +153,4 @@ Please _consider_ the following before making a **PR**:
   - [x] `x` option to sort by hexidecimal (16).
 - [ ] Decent test coverage.
 - [ ] Natural Sorting.
+- [ ] Opt-in motion mappings.
