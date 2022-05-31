@@ -65,7 +65,7 @@ M.delimiter_sort = function(text, options)
   local delimiters = options.delimiter and { options.delimiter }
     or user_config.delimiters
 
-  local leading_whitespaces, matches, sorted_words, top_translated_delimiter, trailing_whitespaces
+  local leading_whitespaces, has_leading_delimiter, matches, sorted_words, top_translated_delimiter, trailing_whitespaces, has_trailing_delimiter
   for _, delimiter in ipairs(delimiters) do
     top_translated_delimiter = utils.translate_delimiter(delimiter)
     matches = utils.split_by_delimiter(text, top_translated_delimiter)
@@ -76,6 +76,14 @@ M.delimiter_sort = function(text, options)
         matches
       )
       sorted_words = M.get_sorted_words(matches, options)
+      has_leading_delimiter = string.match(
+        text,
+        '^' .. top_translated_delimiter
+      )
+      has_trailing_delimiter = string.match(
+        text,
+        top_translated_delimiter .. '$'
+      )
       break
     end
   end
@@ -109,7 +117,9 @@ M.delimiter_sort = function(text, options)
     end
   end
 
-  return table.concat(sorted_fragments, top_translated_delimiter)
+  return (has_leading_delimiter and top_translated_delimiter or '')
+    .. table.concat(sorted_fragments, top_translated_delimiter)
+    .. (has_trailing_delimiter and top_translated_delimiter or '')
 end
 
 --- Sort by line, using the default :sort.

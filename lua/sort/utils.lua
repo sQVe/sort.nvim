@@ -92,6 +92,7 @@ M.split_by_delimiter = function(text, translated_delimiter)
   local matches = {}
   local notDelimiterPattern = '([^' .. translated_delimiter .. ']+)'
 
+  ---@diagnostic disable-next-line: discard-returns
   string.gsub(text, notDelimiterPattern, function(match)
     table.insert(matches, match)
   end)
