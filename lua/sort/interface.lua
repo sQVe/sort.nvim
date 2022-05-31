@@ -57,7 +57,8 @@ M.set_line_text = function(selection, text)
       { text }
     )
   else
-    vim.api.nvim_buf_set_text(
+    local ok = pcall(
+      vim.api.nvim_buf_set_text,
       0,
       selection.start.row - 1,
       selection.start.column - 1,
@@ -65,6 +66,17 @@ M.set_line_text = function(selection, text)
       selection.stop.column,
       { text }
     )
+
+    if not ok then
+      vim.api.nvim_buf_set_text(
+        0,
+        selection.start.row - 1,
+        selection.start.column - 1,
+        selection.stop.row - 1,
+        selection.stop.column - 1,
+        { text }
+      )
+    end
   end
 end
 
