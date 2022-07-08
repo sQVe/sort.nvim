@@ -5,8 +5,8 @@ local trailingWhitespacePattern = '%s+$'
 
 --- Parse numbers from string.
 --- @param text string
---- @param base? number
---- @return number | nil
+--- @param base? integer
+--- @return integer | nil
 M.parse_number = function(text, base)
   local binaryPattern = '%d+'
   local digitPattern = '%-?[%d.]+'
@@ -148,7 +148,7 @@ end
 
 --- Find all indexes in a list that holds a unique value.
 --- @param list string[]
---- @return number[] unique_indexes
+--- @return integer[] unique_indexes
 M.find_unique_indexes = function(list)
   local unique_indexes = {}
   local value_map = {}
