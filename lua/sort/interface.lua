@@ -19,25 +19,29 @@ M.get_text_between_columns = function(selection)
     selection.stop.row,
     false
   )[1]
-  local text = string.sub(line, selection.start.column, selection.stop.column)
 
-  return text
+  return string.sub(line, selection.start.column, selection.stop.column)
 end
 
 --- Get rows and columns of currect visual selection.
 --- @return Selection
 M.get_visual_selection = function()
-  local _, srow, scol, _ = unpack(vim.fn.getpos('\'<'))
-  local _, erow, ecol, _ = unpack(vim.fn.getpos('\'>'))
-  local is_selection_inversed = srow > erow or (srow == erow and scol >= ecol)
+  local _, start_row, start_column, _ = unpack(vim.fn.getpos('\'<'))
+  local _, stop_row, end_column, _ = unpack(vim.fn.getpos('\'>'))
+  local is_selection_inversed = start_row > stop_row
+    or (start_row == stop_row and start_column >= end_column)
 
-  local selection = {}
-  selection.start = { row = srow, column = scol }
-  selection.stop = { row = erow, column = ecol }
+  local selection = {
+    start = { row = start_row, column = start_column },
+    stop = { row = stop_row, column = end_column },
+  }
+
+  local function swap_start_stop()
+    selection.start, selection.stop = selection.stop, selection.start
+  end
 
   if is_selection_inversed then
-    selection.start = { row = erow, column = ecol }
-    selection.stop = { row = srow, column = scol }
+    swap_start_stop()
   end
 
   return selection
@@ -47,11 +51,21 @@ end
 --- @param selection Selection
 --- @param text string
 M.set_line_text = function(selection, text)
-  -- Check if using virtual line selection.
+  local offset = {
+    start = {
+      row = selection.start.row - 1,
+      column = selection.start.column - 1,
+    },
+    stop = {
+      row = selection.stop.row - 1,
+      column = selection.stop.column - 1,
+    },
+  }
+
   if selection.stop.column == maximum_line_length then
     vim.api.nvim_buf_set_lines(
       0,
-      selection.start.row - 1,
+      offset.start.row,
       selection.stop.row,
       false,
       { text }
@@ -60,9 +74,9 @@ M.set_line_text = function(selection, text)
     local ok = pcall(
       vim.api.nvim_buf_set_text,
       0,
-      selection.start.row - 1,
-      selection.start.column - 1,
-      selection.stop.row - 1,
+      offset.start.row,
+      offset.start.column,
+      offset.stop.row,
       selection.stop.column,
       { text }
     )
@@ -70,10 +84,10 @@ M.set_line_text = function(selection, text)
     if not ok then
       vim.api.nvim_buf_set_text(
         0,
-        selection.start.row - 1,
-        selection.start.column - 1,
-        selection.stop.row - 1,
-        selection.stop.column - 1,
+        offset.start.row,
+        offset.start.column,
+        offset.stop.row,
+        offset.stop.column,
         { text }
       )
     end

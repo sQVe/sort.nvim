@@ -8,27 +8,25 @@ local trailingWhitespacePattern = '%s+$'
 --- @param base? integer
 --- @return integer | nil
 M.parse_number = function(text, base)
-  local binaryPattern = '%d+'
-  local digitPattern = '%-?[%d.]+'
-  local hexPattern = '(%-?)(%x+)'
-  local hexPrefixPattern = '(%-?)0[xX](%x+)'
-
+  base = base or 10
   local match
+
   if base == 2 then
-    match = string.match(text, binaryPattern)
+    match = string.match(text, '%d+')
+  elseif base == 10 then
+    match = string.match(text, '%-?[%d.]+')
   elseif base == 16 then
     local minus, hexMatch
 
-    minus, hexMatch = string.match(text, hexPrefixPattern)
+    minus, hexMatch = string.match(text, '(%-?)0[xX](%x+)')
     if minus == nil then
-      minus, hexMatch = string.match(text, hexPattern)
+      minus, hexMatch = string.match(text, '(%-?)(%x+)')
     end
 
     match = (minus or '') .. (hexMatch or '')
-  else
-    match = string.match(text, digitPattern)
   end
 
+  ---@diagnostic disable-next-line: param-type-mismatch
   return tonumber(match or '', base ~= 10 and base or nil)
 end
 
@@ -92,10 +90,9 @@ M.split_by_delimiter = function(text, translated_delimiter)
   local matches = {}
   local notDelimiterPattern = '([^' .. translated_delimiter .. ']+)'
 
-  ---@diagnostic disable-next-line: discard-returns
-  string.gsub(text, notDelimiterPattern, function(match)
+  for match in string.gmatch(text, notDelimiterPattern) do
     table.insert(matches, match)
-  end)
+  end
 
   return matches
 end
@@ -106,8 +103,8 @@ end
 M.reverse_list = function(list)
   local reversed_list = {}
 
-  for i = #list, 1, -1 do
-    reversed_list[#reversed_list + 1] = list[i]
+  for i = 1, #list do
+    table.insert(reversed_list, 1, list[i])
   end
 
   return reversed_list
@@ -123,17 +120,6 @@ M.translate_delimiter = function(delimiter)
   }
 
   return translateMap[delimiter] or delimiter
-end
-
---- Trim escaped backslash.
---- @param text string
---- @return string
-M.trim_escaped_backslash = function(text)
-  local escapedBackslashPattern = '\\'
-
-  text = string.gsub(text, escapedBackslashPattern, '')
-
-  return text
 end
 
 --- Trim leading and trailing whitespaces.
