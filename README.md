@@ -1,15 +1,15 @@
 # 🔠 sort.nvim
 
-**Sort** is a sorting plugin for [Neovim](https://neovim.io) which provides a simple command that mimics `:sort` and supports both line-wise and delimiter sorting. **Sort** intelligently picks a sorting strategy, by using a configurable priority list, which minimizes manual input and should cover most sorting cases by simply running `:Sort` on a range.
+**Sort** is a sorting plugin for [Neovim](https://neovim.io) that provides a simple command to mimic `:sort` and supports both line-wise and delimiter sorting. This plugin intelligently selects a sorting strategy by using a configurable priority list, minimizing manual input and covering most sorting cases with just the `:Sort` command on a range.
 
 ## ❓ Why
 
-- Delimiter sorting.
-- Picks sorting strategy intelligently, by using a configurable priority list.
-- Minimize manual input.
+- Supports delimiter sorting.
+- Intelligently selects a sorting strategy using a configurable priority list.
+- Minimizes manual input required from the user.
 - Efficient and lightweight.
-- Utilize and mimic builtin `:sort` when possible.
-- Silence the nitpicker within you.
+- Mimics the functionality of Neovim's built-in `:sort` command where possible.
+- Helps to satisfy the perfectionist in you by ensuring your text is neatly sorted.
 
 ## 📦 Installation
 
@@ -70,11 +70,11 @@ EOF
 
 https://user-images.githubusercontent.com/2284724/145567686-3b52978c-58fe-4f32-ad27-c2b1060870ba.mp4
 
-Sorting with **Sort** is easy via the provided `:Sort` command. Two different strategies are utilized depending on the visual selection:
+Sorting with the **Sort** plugin is made easy through the provided `:Sort` command. The plugin utilizes two different strategies depending on the visual selection:
 
 - Multiple lines
 
-  All arguments provided to `:Sort` are feed to the builtin `:sort` command, and thus mirroring all features provided by the builtin sort. See `:help :sort` for usage and options.
+  When selecting multiple lines, all arguments provided to `:Sort` are fed to the built-in `:sort` command, thereby mirroring all of the features provided by the built-in sort. See `:help :sort` for usage and options.
 
 - Single line
 
@@ -82,30 +82,21 @@ Sorting with **Sort** is easy via the provided `:Sort` command. Two different st
   :[range]Sort[!] [delimiter][b][i][n][o][u][x]
   ```
 
-  - With `[!]` the sort order is reversed.
-
-  - With `[delimiter]` the delimiter is manually set instead of iterating over `config.delimiters` and sorting by the highest priority delimiter with results. Valid delimiters are:
-
+  - Use `[!]` to reverse the sort order.
+  - Use `[delimiter]` to manually set the delimiter instead of iterating over `config.delimiters` and sorting by the highest priority delimiter. Valid delimiters include:
     - Any punctuation character (!, ?, &, ...), matching the `%p` lua pattern character class.
     - `s`: Space
     - `t`: Tab
-
-  - With `[b]` sorting is done on the first binary number in the word.
-
-  - With `[i]` case is ignored.
-
-  - With `[n]` sorting is done on the first decimal number in the word.
-
-  - With `[o]` sorting is done on the first octal number in the word.
-
-  - With `[u]` only keep the first instance of words within selection.
-    **_Note_** leading and trailing white space isn't considered when testing for uniqueness.
-
-  - With `[x]` sorting is done on the first hexadecimal number the word. A leading `0x` or `0X` is ignored.
+  - Use `[b]` to sort based on the first binary number in the word.
+  - Use `[i]` to ignore the case when sorting.
+  - Use `[n]` to sort based on the first decimal number in the word.
+  - Use `[o]` to sort based on the first octal number in the word.
+  - Use `[u]` to only keep the first instance of words within the selection. Leading and trailing whitespace are not considered when testing for uniqueness.
+  - Use `[x]` to sort based on the first hexadecimal number in the word. A leading `0x` or `0X` is ignored.
 
 ## ⌨️ Keybinding
 
-**Sort** does not by default set any keybindings. The following example sets `go`, which you can change to whatever you choose, to trigger `:Sort`:
+By default, **Sort** does not set any keybindings. Here's an example of how you can set a keybinding to trigger `:Sort`. In this example, the keybinding `go` is used, but you can change it to whatever you prefer:
 
 ```vim
 " Vim Script.
@@ -138,19 +129,21 @@ nnoremap <silent> go{ vi{<Esc><Cmd>Sort<CR>
 
 ## 🤝 Contributing
 
-All contributions are great and highly appreciated, be it a bug, fix or feature request. Don't hesitate to reach out via the [issue tracker](https://github.com/sQVe/sort.nvim/issues).
+All contributions to Sort are greatly appreciated, whether it's a bug fix or a feature request. If you would like to contribute, please don't hesitate to reach out via the [issue tracker](https://github.com/sQVe/sort.nvim/issues).
 
-Please _consider_ the following before making a **PR**:
+Before making a pull request, please consider the following:
 
-- Install [stylua](https://github.com/johnnymorganz/stylua) to ensure proper formatting.
+- Follow the existing code style and formatting conventions .
+  - Install [stylua](https://github.com/johnnymorganz/stylua) to ensure proper formatting.
+- Write clear and concise commit messages that describe the changes you've made.
 
 ## 🏁 Roadmap
 
-- [x] Extend support for delimiter sorting, mirroring `:sort` options:
+- [x] Extend support for delimiter sorting to mirror the options available in `:sort`:
   - [x] `b` option to sort by binary (2).
   - [x] `n` option to sort by decimal (10).
   - [x] `o` option to sort by octal (8).
   - [x] `x` option to sort by hexidecimal (16).
-- [ ] Decent test coverage.
-- [ ] Natural Sorting.
-- [ ] Opt-in motion mappings.
+- [ ] Improve test coverage to ensure the stability and reliability of the plugin.
+- [ ] Add support for natural sorting to provide more intuitive sorting of strings that include numeric values.
+- [ ] Add opt-in motion mappings to enable users to trigger Sort commands more efficiently using keybindings.
