@@ -26,8 +26,8 @@ end
 --- Get rows and columns of currect visual selection.
 --- @return Selection
 M.get_visual_selection = function()
-  local _, start_row, start_column, _ = unpack(vim.fn.getpos("'<"))
-  local _, stop_row, end_column, _ = unpack(vim.fn.getpos("'>"))
+  local start_row, start_column = unpack(vim.api.nvim_buf_get_mark(0, '<'))
+  local stop_row, end_column = unpack(vim.api.nvim_buf_get_mark(0, '>'))
   local is_selection_inversed = start_row > stop_row
     or (start_row == stop_row and start_column >= end_column)
 
