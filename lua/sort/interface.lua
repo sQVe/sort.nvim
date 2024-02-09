@@ -27,13 +27,13 @@ end
 --- @return Selection
 M.get_visual_selection = function()
   local start_row, start_column = unpack(vim.api.nvim_buf_get_mark(0, '<'))
-  local stop_row, end_column = unpack(vim.api.nvim_buf_get_mark(0, '>'))
+  local stop_row, stop_column = unpack(vim.api.nvim_buf_get_mark(0, '>'))
   local is_selection_inversed = start_row > stop_row
-    or (start_row == stop_row and start_column >= end_column)
+    or (start_row == stop_row and start_column >= stop_column)
 
   local selection = {
     start = { row = start_row, column = start_column },
-    stop = { row = stop_row, column = end_column },
+    stop = { row = stop_row, column = stop_column },
   }
 
   local function swap_start_stop()
