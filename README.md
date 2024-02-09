@@ -84,7 +84,7 @@ Sorting with the **Sort** plugin is made easy through the provided `:Sort` comma
 
   - Use `[!]` to reverse the sort order.
   - Use `[delimiter]` to manually set the delimiter instead of iterating over `config.delimiters` and sorting by the highest priority delimiter. Valid delimiters include:
-    - Any punctuation character (!, ?, &, ...), matching the `%p` lua pattern character class.
+    - Any punctuation character (!, ?, &, ...), matching the `%p` Lua pattern character class.
     - `s`: Space
     - `t`: Tab
   - Use `[b]` to sort based on the first binary number in the word.
@@ -145,7 +145,7 @@ Before making a pull request, please consider the following:
   - [x] `b` option to sort by binary (2).
   - [x] `n` option to sort by decimal (10).
   - [x] `o` option to sort by octal (8).
-  - [x] `x` option to sort by hexidecimal (16).
+  - [x] `x` option to sort by hexadecimal (16).
 - [ ] Improve test coverage to ensure the stability and reliability of the plugin.
 - [ ] Add support for natural sorting to provide more intuitive sorting of strings that include numeric values.
 - [ ] Add opt-in motion mappings to enable users to trigger Sort commands more efficiently using keybindings.
