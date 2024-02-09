@@ -133,8 +133,10 @@ All contributions to Sort are greatly appreciated, whether it's a bug fix or a f
 
 Before making a pull request, please consider the following:
 
-- Follow the existing code style and formatting conventions .
-  - Install [stylua](https://github.com/johnnymorganz/stylua) to ensure proper formatting.
+- Initially, before you commit anything, install [pre-commit](https://pre-commit.com/) and its git hooks (`pre-commit install`). It ensures in particular that
+  - Lua code is properly formatting with [stylua](https://github.com/johnnymorganz/stylua) and
+  - commit messages are formatted according to the [conventional commits specification](https://www.conventionalcommits.org/en/v1.0.0/).
+- Follow the existing code style.
 - Write clear and concise commit messages that describe the changes you've made.
 
 ## 🏁 Roadmap
