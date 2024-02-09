@@ -72,18 +72,13 @@ M.delimiter_sort = function(text, options)
     local delimiterCount = #matches - 1
 
     if delimiterCount > 0 then
-      leading_whitespaces, trailing_whitespaces = M.get_whitespaces_around_word(
-        matches
-      )
+      leading_whitespaces, trailing_whitespaces =
+        M.get_whitespaces_around_word(matches)
       sorted_words = M.get_sorted_words(matches, options)
-      has_leading_delimiter = string.match(
-        text,
-        '^' .. top_translated_delimiter
-      )
-      has_trailing_delimiter = string.match(
-        text,
-        top_translated_delimiter .. '$'
-      )
+      has_leading_delimiter =
+        string.match(text, '^' .. top_translated_delimiter)
+      has_trailing_delimiter =
+        string.match(text, top_translated_delimiter .. '$')
       break
     end
   end

@@ -6,7 +6,7 @@ local maximum_line_length = 2147483647
 --- @param bang string
 --- @param arguments string
 M.execute_builtin_sort = function(bang, arguments)
-  vim.api.nvim_command('\'<,\'>sort' .. bang .. ' ' .. arguments)
+  vim.api.nvim_command("'<,'>sort" .. bang .. ' ' .. arguments)
 end
 
 --- Get text between two columns.
@@ -26,8 +26,8 @@ end
 --- Get rows and columns of currect visual selection.
 --- @return Selection
 M.get_visual_selection = function()
-  local _, start_row, start_column, _ = unpack(vim.fn.getpos('\'<'))
-  local _, stop_row, end_column, _ = unpack(vim.fn.getpos('\'>'))
+  local _, start_row, start_column, _ = unpack(vim.fn.getpos("'<"))
+  local _, stop_row, end_column, _ = unpack(vim.fn.getpos("'>"))
   local is_selection_inversed = start_row > stop_row
     or (start_row == stop_row and start_column >= end_column)
 
