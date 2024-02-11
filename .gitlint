@@ -1,0 +1,11 @@
+# vi: ft=dosini
+
+[general]
+contrib=contrib-title-conventional-commits
+ignore=body-is-missing
+
+[title-max-length]
+line-length=50
+
+[body-max-line-length]
+line-length=72

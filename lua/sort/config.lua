@@ -21,5 +21,4 @@ M.setup = function(overrides)
   return user_config
 end
 
-
 return M
