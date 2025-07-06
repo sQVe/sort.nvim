@@ -399,8 +399,27 @@ describe('sort', function()
       end
     )
 
-    it('should preserve alignment whitespace (3+ spaces) while normalizing others', function()
-      local text = 'b,d,   e, f,l'
+    it(
+      'should preserve alignment whitespace (3+ spaces) while normalizing others',
+      function()
+        local text = 'b,d,   e, f,l'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
+
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('b, d,   e, f, l', result)
+      end
+    )
+  end)
+
+  describe('line_sort_text', function()
+    it('should sort lines alphabetically', function()
+      local text = 'cherry\napple\nbanana'
       local options = {
         delimiter = nil,
         ignore_case = false,
@@ -409,8 +428,165 @@ describe('sort', function()
         unique = false,
       }
 
-      local result = sort.delimiter_sort(text, options)
-      assert.are.equal('b, d,   e, f, l', result)
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('apple\nbanana\ncherry', result)
+    end)
+
+    it('should sort lines in reverse order', function()
+      local text = 'apple\nbanana\ncherry'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = true,
+        unique = false,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('cherry\nbanana\napple', result)
+    end)
+
+    it('should handle case-insensitive sorting', function()
+      local text = 'Cherry\napple\nBanana'
+      local options = {
+        delimiter = nil,
+        ignore_case = true,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('apple\nBanana\nCherry', result)
+    end)
+
+    it('should remove duplicate lines when unique is true', function()
+      local text = 'apple\nbanana\napple\ncherry\nbanana'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('apple\nbanana\ncherry', result)
+    end)
+
+    it('should handle case-insensitive uniqueness', function()
+      local text = 'Apple\napple\nBanana\nbanana\nAPPLE'
+      local options = {
+        delimiter = nil,
+        ignore_case = true,
+        numerical = nil,
+        reverse = false,
+        unique = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('Apple\nBanana', result)
+    end)
+
+    it('should sort numerical lines', function()
+      local text = '10\n2\n100\n1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = 10,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('1\n2\n10\n100', result)
+    end)
+
+    it('should handle empty lines', function()
+      local text = 'cherry\n\napple\n\nbanana'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('\n\napple\nbanana\ncherry', result)
+    end)
+
+    it('should preserve whitespace in lines', function()
+      local text = '  cherry  \n\tapple\t\n banana '
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('\tapple\t\n banana \n  cherry  ', result)
+    end)
+
+    it('should handle single line input', function()
+      local text = 'single line'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('single line', result)
+    end)
+
+    it('should handle empty input', function()
+      local text = ''
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('', result)
+    end)
+
+    it(
+      'should handle mixed options (case-insensitive + reverse + unique)',
+      function()
+        local text = 'Apple\nbanana\nAPPLE\nCherry\nbanana'
+        local options = {
+          delimiter = nil,
+          ignore_case = true,
+          numerical = nil,
+          reverse = true,
+          unique = true,
+        }
+
+        local result = sort.line_sort_text(text, options)
+        assert.are.equal('Cherry\nbanana\nApple', result)
+      end
+    )
+
+    it('should handle numerical + reverse + unique', function()
+      local text = '10\n5\n20\n10\n5\n15'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = 10,
+        reverse = true,
+        unique = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('20\n15\n10\n5', result)
     end)
   end)
 end)

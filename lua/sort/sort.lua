@@ -69,7 +69,6 @@ M.delimiter_sort = function(text, options)
     end
   end
 
-
   -- Create array of items with their whitespace preserved.
   local items = {}
   for i, match in ipairs(matches) do
@@ -134,7 +133,7 @@ M.delimiter_sort = function(text, options)
     local alignment_threshold = whitespace_config.alignment_threshold or 3
     local has_alignment = false
     local non_alignment_patterns = {}
-    
+
     for _, item in ipairs(items) do
       if item.trimmed ~= '' then
         if string.len(item.leading_ws) >= alignment_threshold then
@@ -144,13 +143,13 @@ M.delimiter_sort = function(text, options)
         end
       end
     end
-    
+
     -- Count non-alignment patterns.
     local pattern_count = 0
     for _ in pairs(non_alignment_patterns) do
       pattern_count = pattern_count + 1
     end
-    
+
     -- If we have alignment whitespace AND inconsistent non-alignment patterns, normalize.
     -- OR if we have multiple space-only patterns of different lengths (inconsistent spacing).
     if has_alignment and pattern_count > 1 then
@@ -167,7 +166,7 @@ M.delimiter_sort = function(text, options)
           break
         end
       end
-      
+
       if all_spaces then
         needs_normalization = true
       end
@@ -237,11 +236,98 @@ M.delimiter_sort = function(text, options)
     .. (has_trailing_delimiter and top_translated_delimiter or '')
 end
 
---- Sort by line, using the default :sort.
+--- Sort lines of text according to sort options.
+--- @param text string Multi-line text to sort
+--- @param options SortOptions
+--- @return string sorted_text
+M.line_sort_text = function(text, options)
+  -- Handle empty or nil input.
+  if not text or text == '' then
+    return text or ''
+  end
+
+  -- Split text into lines.
+  local lines = vim.split(text, '\n')
+
+  -- Handle single line (no sorting needed).
+  if #lines <= 1 then
+    return text
+  end
+
+  -- Create array of line objects with trimmed content for comparison.
+  local line_items = {}
+  for i, line in ipairs(lines) do
+    local trimmed = utils.trim_leading_and_trailing_whitespace(line)
+    table.insert(line_items, {
+      original = line,
+      trimmed = trimmed,
+      original_position = i,
+    })
+  end
+
+  -- Handle unique option first - remove duplicates before sorting.
+  local items_to_sort = {}
+  if options.unique then
+    local seen = {}
+    for _, item in ipairs(line_items) do
+      local key = options.ignore_case and string.lower(item.trimmed)
+        or item.trimmed
+      if not seen[key] then
+        seen[key] = true
+        table.insert(items_to_sort, item)
+      end
+    end
+  else
+    items_to_sort = line_items
+  end
+
+  -- Sort lines using the same comparison logic as delimiter sorting but on trimmed content.
+  table.sort(items_to_sort, function(a, b)
+    if options.reverse then
+      return compare_strings(b.trimmed, a.trimmed, options)
+    else
+      return compare_strings(a.trimmed, b.trimmed, options)
+    end
+  end)
+
+  -- Extract original lines from sorted items.
+  local result_lines = {}
+  for _, item in ipairs(items_to_sort) do
+    table.insert(result_lines, item.original)
+  end
+
+  -- Join lines back together.
+  return table.concat(result_lines, '\n')
+end
+
+--- Sort by line, using our custom line sorting implementation.
 --- @param bang string
 --- @param arguments string
 M.line_sort = function(bang, arguments)
-  interface.execute_builtin_sort(bang, arguments)
+  local selection = interface.get_visual_selection()
+  local options = utils.parse_arguments(bang, arguments)
+
+  -- Get the text from the selected lines.
+  local lines = vim.api.nvim_buf_get_lines(
+    0,
+    selection.from.row - 1,
+    selection.to.row,
+    false
+  )
+  local text = table.concat(lines, '\n')
+
+  -- Sort the text using our line sorting implementation.
+  local sorted_text = M.line_sort_text(text, options)
+
+  -- Set the sorted lines back.
+  local sorted_lines = vim.split(sorted_text, '\n')
+  vim.api.nvim_buf_set_lines(
+    0,
+    selection.from.row - 1,
+    selection.to.row,
+    false,
+    sorted_lines
+  )
 end
 
 return M

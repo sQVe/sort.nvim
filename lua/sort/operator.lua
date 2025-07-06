@@ -109,10 +109,10 @@ local function set_text_for_motion(
         -- Operator marks are 0-based, use nvim_buf_set_text which expects 0-based
         vim.api.nvim_buf_set_text(
           0,
-          start_pos[1] - 1,  -- Convert 1-based row to 0-based
-          start_pos[2],      -- Column already 0-based
-          end_pos[1] - 1,    -- Convert 1-based row to 0-based
-          end_pos[2] + 1,    -- Operator marks are inclusive, nvim_buf_set_text expects exclusive end
+          start_pos[1] - 1, -- Convert 1-based row to 0-based
+          start_pos[2], -- Column already 0-based
+          end_pos[1] - 1, -- Convert 1-based row to 0-based
+          end_pos[2] + 1, -- Operator marks are inclusive, nvim_buf_set_text expects exclusive end
           { text }
         )
       end
@@ -197,11 +197,11 @@ local function sort_text_with_trailing_delimiter(text, options)
   -- Check if text ends with a delimiter
   local config = require('sort.config')
   local delimiters = config.get_user_config().delimiters
-  
+
   local last_char = string.sub(text, -1)
   local has_trailing_delimiter = false
   local trailing_delimiter = ''
-  
+
   for _, delimiter in ipairs(delimiters) do
     local translated_delimiter = utils.translate_delimiter(delimiter)
     if last_char == translated_delimiter then
@@ -210,7 +210,7 @@ local function sort_text_with_trailing_delimiter(text, options)
       break
     end
   end
-  
+
   if has_trailing_delimiter then
     -- Sort the text without the trailing delimiter, then add it back
     local text_to_sort = string.sub(text, 1, -2)
@@ -250,16 +250,25 @@ M.sort_operator = function(motion_type, from_visual)
   -- When motion_type is 'line' but we have marks on the same line, treat as char motion
   local effective_motion_type = motion_type
   if motion_type == 'line' and start_pos[1] == end_pos[1] then
-    -- This is likely a $ motion that vim interpreted as line motion
-    -- Convert it to character motion to the end of the line
-    local line = vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, start_pos[1], false)[1] or ''
-    end_pos = {start_pos[1], string.len(line) - 1}
+    -- This is likely a $ motion that vim interpreted as line motion.
+    -- Convert it to character motion to the end of the line.
+    local line = vim.api.nvim_buf_get_lines(
+      0,
+      start_pos[1] - 1,
+      start_pos[1],
+      false
+    )[1] or ''
+    end_pos = { start_pos[1], string.len(line) - 1 }
     effective_motion_type = 'char'
   end
 
-  -- Get the text covered by the motion
-  local text =
-    get_text_for_motion(effective_motion_type, start_pos, end_pos, is_visual_marks)
+  -- Get the text covered by the motion.
+  local text = get_text_for_motion(
+    effective_motion_type,
+    start_pos,
+    end_pos,
+    is_visual_marks
+  )
 
   if text == '' or text == nil then
     return
@@ -271,18 +280,13 @@ M.sort_operator = function(motion_type, from_visual)
   local sorted_text
   if effective_motion_type == 'line' then
     -- For line-wise motions, we need to handle each line separately
-    -- but still use delimiter sorting if it's a single line selection
+    -- but still use delimiter sorting if it's a single line selection.
     local lines = vim.split(text, '\n')
     if #lines == 1 then
       sorted_text = sort_text_with_trailing_delimiter(text, options)
     else
-      -- For multi-line, we'll need to implement line sorting here
-      -- For now, fall back to delimiter sort on each line
-      local sorted_lines = {}
-      for _, line in ipairs(lines) do
-        table.insert(sorted_lines, sort_text_with_trailing_delimiter(line, options))
-      end
-      sorted_text = table.concat(sorted_lines, '\n')
+      -- For multi-line, use proper line sorting.
+      sorted_text = sort.line_sort_text(text, options)
     end
   else
     sorted_text = sort_text_with_trailing_delimiter(text, options)
@@ -304,7 +308,7 @@ end
 -- Make the function globally accessible for operatorfunc
 -- vim's operatorfunc only passes motion_type, so we need a wrapper
 _G._sort_operator = function(motion_type)
-  return M.sort_operator(motion_type, false)  -- false = not from visual mode
+  return M.sort_operator(motion_type, false) -- false = not from visual mode
 end
 
 return M
