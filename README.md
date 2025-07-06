@@ -23,11 +23,11 @@ use({
 
   -- Optional setup for overriding defaults.
   config = function()
-    require("sort").setup({
+    require('sort').setup({
       -- Input configuration here.
       -- Refer to the configuration section below for options.
     })
-  end
+  end,
 })
 ```
 
@@ -96,35 +96,93 @@ Sorting with the **Sort** plugin is made easy through the provided `:Sort` comma
 
 ## ⌨️ Keybinding
 
-By default, **Sort** does not set any keybindings. Here's an example of how you can set a keybinding to trigger `:Sort`. In this example, the keybinding `go` is used, but you can change it to whatever you prefer:
+**Sort** provides both command-based and motion-based sorting approaches.
+
+### Command-based sorting (traditional)
+
+For backward compatibility, you can still use the `:Sort` command. Here's how to set up keybindings:
 
 ```vim
 " Vim Script.
-
-nnoremap <silent> go <Cmd>Sort<CR>
-vnoremap <silent> go <Esc><Cmd>Sort<CR>
+nnoremap <silent> <leader>s <Cmd>Sort<CR>
+vnoremap <silent> <leader>s <Esc><Cmd>Sort<CR>
 ```
 
 ```lua
 -- Lua.
-
-vim.cmd([[
-  nnoremap <silent> go <Cmd>Sort<CR>
-  vnoremap <silent> go <Esc><Cmd>Sort<CR>
-]])
+vim.keymap.set('n', '<leader>s', '<Cmd>Sort<CR>', { silent = true })
+vim.keymap.set('v', '<leader>s', '<Esc><Cmd>Sort<CR>', { silent = true })
 ```
 
-A common workflow, before sorting, is to visually select inside a set of characters with `vi<character>`. Instead of doing that manually before running **Sort** you could add the keybindings like:
+### Motion-based sorting (recommended)
+
+**Sort** now provides motion mappings that work like native Vim operators. By default, the following mappings are available when you call `require('sort').setup()`:
+
+| Mapping | Mode | Description |
+|---------|------|-------------|
+| `go` | Normal | Sort operator (use with any motion) |
+| `go` | Visual | Sort visual selection |
+| `gogo` | Normal | Sort current line |
+| `is` | Operator/Visual | Inner sortable region textobject |
+| `as` | Operator/Visual | Around sortable region textobject |
+| `]s` | Normal/Visual/Operator | Jump to next delimiter |
+| `[s` | Normal/Visual/Operator | Jump to previous delimiter |
+
+#### Examples:
 
 ```vim
-" Vim Script.
+" Sort a word
+gow
 
-nnoremap <silent> go" vi"<Esc><Cmd>Sort<CR>
-nnoremap <silent> go' vi'<Esc><Cmd>Sort<CR>
-nnoremap <silent> go( vi(<Esc><Cmd>Sort<CR>
-nnoremap <silent> go[ vi[<Esc><Cmd>Sort<CR>
-nnoremap <silent> gop vip<Esc><Cmd>Sort<CR>
-nnoremap <silent> go{ vi{<Esc><Cmd>Sort<CR>
+" Sort inside parentheses
+go(
+
+" Sort 3 lines down
+go3j
+
+" Sort inside quotes using textobject
+gois
+
+" Sort around delimiters using textobject
+goas
+
+" Sort a paragraph
+gop
+
+" Quick line sort
+gogo
+```
+
+### Customizing mappings
+
+You can customize or disable the mappings by configuring them in setup:
+
+```lua
+require('sort').setup({
+  mappings = {
+    operator = 'gs', -- Change operator from 'go' to 'gs'
+    textobject = {
+      inner = 'ii', -- Change from 'is' to 'ii'
+      around = 'ai', -- Change from 'as' to 'ai'
+    },
+    motion = {
+      next_delimiter = ']d', -- Change from ']s' to ']d'
+      prev_delimiter = '[d', -- Change from '[s' to '[d'
+    },
+  },
+})
+```
+
+To disable mappings entirely, set them to `false`:
+
+```lua
+require('sort').setup({
+  mappings = {
+    operator = false, -- Disable operator mapping
+    textobject = false, -- Disable textobject mappings
+    motion = false, -- Disable motion mappings
+  },
+})
 ```
 
 ## 🤝 Contributing
@@ -144,6 +202,6 @@ Before making a pull request, please consider the following:
   - [x] `n` option to sort by decimal (10).
   - [x] `o` option to sort by octal (8).
   - [x] `x` option to sort by hexidecimal (16).
-- [ ] Improve test coverage to ensure the stability and reliability of the plugin.
+- [x] Improve test coverage to ensure the stability and reliability of the plugin.
+- [x] Add opt-in motion mappings to enable users to trigger Sort commands more efficiently using keybindings.
 - [ ] Add support for natural sorting to provide more intuitive sorting of strings that include numeric values.
-- [ ] Add opt-in motion mappings to enable users to trigger Sort commands more efficiently using keybindings.
