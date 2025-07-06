@@ -589,4 +589,601 @@ describe('sort', function()
       assert.are.equal('20\n15\n10\n5', result)
     end)
   end)
+
+  describe('natural sorting', function()
+    -- Basic natural sorting tests
+    it('should sort alphanumeric strings naturally', function()
+      local text = 'item10,item2,item1,item20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item1,item2,item10,item20', result)
+    end)
+
+    it('should sort filenames naturally', function()
+      local text = 'file10.txt,file2.txt,file1.txt,file20.txt'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('file1.txt,file2.txt,file10.txt,file20.txt', result)
+    end)
+
+    it('should sort version numbers naturally', function()
+      local text = 'v1.10.0,v1.2.0,v1.1.0,v2.0.0'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('v1.1.0,v1.2.0,v1.10.0,v2.0.0', result)
+    end)
+
+    it('should handle mixed strings and numbers', function()
+      local text = 'abc,def10,def2,abc10,abc2'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('abc,abc2,abc10,def2,def10', result)
+    end)
+
+    it('should handle multiple numeric parts', function()
+      local text = 'a1b2c3,a1b10c2,a1b2c10,a10b2c3'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('a1b2c3,a1b2c10,a1b10c2,a10b2c3', result)
+    end)
+
+    it('should handle leading zeros', function()
+      local text = 'item001,item10,item02,item100'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item001,item02,item10,item100', result)
+    end)
+
+    it('should handle negative numbers naturally', function()
+      local text = 'item-10,item-2,item-1,item-20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item-20,item-10,item-2,item-1', result)
+    end)
+
+    it('should handle decimal numbers naturally', function()
+      local text = 'item1.10,item1.2,item1.1,item2.0'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item1.1,item1.2,item1.10,item2.0', result)
+    end)
+
+    it('should handle numbers at the beginning', function()
+      local text = '10item,2item,1item,20item'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('1item,2item,10item,20item', result)
+    end)
+
+    it('should handle numbers at the end', function()
+      local text = 'item10,item2,item1,item20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item1,item2,item10,item20', result)
+    end)
+
+    it('should handle numbers in the middle', function()
+      local text = 'pre10post,pre2post,pre1post,pre20post'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('pre1post,pre2post,pre10post,pre20post', result)
+    end)
+
+    -- Edge cases
+    it('should handle empty strings', function()
+      local text = 'item10,,item2,item1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal(',item1,item2,item10', result)
+    end)
+
+    it('should handle strings with only numbers', function()
+      local text = '10,2,1,20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('1,2,10,20', result)
+    end)
+
+    it('should handle strings with only letters', function()
+      local text = 'zebra,apple,banana,cherry'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('apple,banana,cherry,zebra', result)
+    end)
+
+    it('should handle very large numbers', function()
+      local text = 'item999999999,item1000000000,item1,item2'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item1,item2,item999999999,item1000000000', result)
+    end)
+
+    it('should handle mixed case with numbers', function()
+      local text = 'Item10,item2,ITEM1,item20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('ITEM1,Item10,item2,item20', result)
+    end)
+
+    it('should handle unicode characters with numbers', function()
+      local text = 'ñoño10,ñoño2,ñoño1,ñoño20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('ñoño1,ñoño2,ñoño10,ñoño20', result)
+    end)
+
+    it('should handle special characters with numbers', function()
+      local text = 'item-10,item_2,item@1,item#20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item#20,item-10,item@1,item_2', result)
+    end)
+
+    -- Natural sorting with reverse option
+    it('should sort naturally in reverse order', function()
+      local text = 'item10,item2,item1,item20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = true,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item20,item10,item2,item1', result)
+    end)
+
+    -- Natural sorting with case-insensitive option
+    it('should sort naturally case-insensitively', function()
+      local text = 'Item10,item2,ITEM1,item20'
+      local options = {
+        delimiter = nil,
+        ignore_case = true,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('ITEM1,item2,Item10,item20', result)
+    end)
+
+    -- Natural sorting with unique option
+    it('should sort naturally with unique option', function()
+      local text = 'item10,item2,item1,item10,item2'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = true,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item1,item2,item10', result)
+    end)
+
+    -- Natural sorting with all options combined
+    it('should handle natural sorting with all options', function()
+      local text = 'Item10,item2,ITEM1,item10,Item2'
+      local options = {
+        delimiter = nil,
+        ignore_case = true,
+        numerical = nil,
+        reverse = true,
+        unique = true,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item10,item2,ITEM1', result)
+    end)
+
+    -- Natural sorting with different delimiters
+    it('should handle natural sorting with tab delimiter', function()
+      local text = 'item10\titem2\titem1\titem20'
+      local options = {
+        delimiter = 't',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item1\titem2\titem10\titem20', result)
+    end)
+
+    it('should handle natural sorting with space delimiter', function()
+      local text = 'item10 item2 item1 item20'
+      local options = {
+        delimiter = 's',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item1 item2 item10 item20', result)
+    end)
+
+    it('should handle natural sorting with pipe delimiter', function()
+      local text = 'item10|item2|item1|item20'
+      local options = {
+        delimiter = '|',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item1|item2|item10|item20', result)
+    end)
+
+    -- Complex natural sorting scenarios
+    it('should handle complex version-like strings', function()
+      local text = 'v1.10.0-beta.2,v1.2.0,v1.10.0-beta.10,v1.2.0-alpha.1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('v1.2.0,v1.2.0-alpha.1,v1.10.0-beta.2,v1.10.0-beta.10', result)
+    end)
+
+    it('should handle natural sorting with whitespace preservation', function()
+      local text = '  item10  ,\titem2\t,  item1  ,  item20  '
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('  item1  ,\titem2\t,  item10  ,  item20  ', result)
+    end)
+
+    it('should handle natural sorting with mixed numeric patterns', function()
+      local text = 'chapter1.section10,chapter10.section2,chapter2.section1,chapter1.section2'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('chapter1.section2,chapter1.section10,chapter2.section1,chapter10.section2', result)
+    end)
+
+    it('should handle natural sorting with path-like strings', function()
+      local text = 'path/to/file10.txt,path/to/file2.txt,path/to/file1.txt,path/to/file20.txt'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('path/to/file1.txt,path/to/file2.txt,path/to/file10.txt,path/to/file20.txt', result)
+    end)
+
+    it('should handle natural sorting with zero-padded numbers', function()
+      local text = 'item001,item010,item002,item100'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item001,item002,item010,item100', result)
+    end)
+
+    it('should handle natural sorting with mixed zero-padded and non-padded', function()
+      local text = 'item1,item010,item2,item100'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item1,item2,item010,item100', result)
+    end)
+  end)
+
+  describe('natural sorting for lines', function()
+    it('should sort lines naturally', function()
+      local text = 'item10\nitem2\nitem1\nitem20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('item1\nitem2\nitem10\nitem20', result)
+    end)
+
+    it('should sort filename lines naturally', function()
+      local text = 'file10.txt\nfile2.txt\nfile1.txt\nfile20.txt'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('file1.txt\nfile2.txt\nfile10.txt\nfile20.txt', result)
+    end)
+
+    it('should sort lines naturally with reverse option', function()
+      local text = 'item10\nitem2\nitem1\nitem20'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = true,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('item20\nitem10\nitem2\nitem1', result)
+    end)
+
+    it('should sort lines naturally case-insensitively', function()
+      local text = 'Item10\nitem2\nITEM1\nitem20'
+      local options = {
+        delimiter = nil,
+        ignore_case = true,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('ITEM1\nitem2\nItem10\nitem20', result)
+    end)
+
+    it('should sort lines naturally with unique option', function()
+      local text = 'item10\nitem2\nitem1\nitem10\nitem2'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = true,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('item1\nitem2\nitem10', result)
+    end)
+
+    it('should handle natural sorting with whitespace in lines', function()
+      local text = '  item10  \n\titem2\t\n  item1  \n  item20  '
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('  item1  \n\titem2\t\n  item10  \n  item20  ', result)
+    end)
+
+    it('should handle natural sorting with empty lines', function()
+      local text = 'item10\n\nitem2\nitem1\n'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('\n\nitem1\nitem2\nitem10', result)
+    end)
+
+    it('should handle complex natural line sorting', function()
+      local text = 'chapter1.section10\nchapter10.section2\nchapter2.section1\nchapter1.section2'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('chapter1.section2\nchapter1.section10\nchapter2.section1\nchapter10.section2', result)
+    end)
+  end)
 end)

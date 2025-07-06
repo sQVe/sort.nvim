@@ -17,3 +17,4 @@
 --- @field public numerical? integer
 --- @field public reverse boolean
 --- @field public unique boolean
+--- @field public natural boolean

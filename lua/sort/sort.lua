@@ -10,6 +10,11 @@ local M = {}
 --- @param options SortOptions
 --- @return boolean
 local function compare_strings(a, b, options)
+  -- Use natural sorting if enabled
+  if options.natural then
+    return utils.natural_compare(a, b, options.ignore_case)
+  end
+
   local sort_a = options.ignore_case and string.lower(a) or a
   local sort_b = options.ignore_case and string.lower(b) or b
 
@@ -124,9 +129,10 @@ M.delimiter_sort = function(text, options)
   end
 
   -- Apply smart whitespace normalization (order changed OR inconsistent spacing with alignment).
+  -- For natural sorting, preserve original whitespace even if order changed
   local user_config = config.get_user_config()
   local whitespace_config = user_config.whitespace or {}
-  local needs_normalization = order_changed
+  local needs_normalization = order_changed and not options.natural
 
   -- Special case: if we have alignment whitespace mixed with inconsistent non-alignment whitespace, normalize.
   if not needs_normalization then
