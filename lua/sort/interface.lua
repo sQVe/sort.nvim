@@ -1,12 +1,14 @@
 local M = {}
 
+-- Maximum line length constant used by Neovim's getpos function.
+-- This is 2^31 - 1, the maximum value for a 32-bit signed integer.
 local maximum_line_length = 2147483647
 
 --- Execute builtin sort command on range.
 --- @param bang string
 --- @param arguments string
 M.execute_builtin_sort = function(bang, arguments)
-  vim.api.nvim_command('\'<,\'>sort' .. bang .. ' ' .. arguments)
+  vim.cmd("'<,'>sort" .. bang .. ' ' .. arguments)
 end
 
 --- Get text between two columns.
@@ -15,33 +17,35 @@ end
 M.get_text_between_columns = function(selection)
   local line = vim.api.nvim_buf_get_lines(
     0,
-    selection.start.row - 1,
-    selection.stop.row,
+    selection.from.row - 1,
+    selection.to.row,
     false
   )[1]
 
-  return string.sub(line, selection.start.column, selection.stop.column)
+  return string.sub(line, selection.from.column, selection.to.column)
 end
 
---- Get rows and columns of currect visual selection.
+--- Get rows and columns of current visual selection.
 --- @return Selection
 M.get_visual_selection = function()
-  local _, start_row, start_column, _ = unpack(vim.fn.getpos('\'<'))
-  local _, stop_row, end_column, _ = unpack(vim.fn.getpos('\'>'))
-  local is_selection_inversed = start_row > stop_row
-    or (start_row == stop_row and start_column >= end_column)
+  local _, from_row, from_column, _ = (table.unpack or unpack)(
+    vim.fn.getpos("'<")
+  )
+  local _, to_row, end_column, _ = (table.unpack or unpack)(vim.fn.getpos("'>"))
+  local is_selection_inversed = from_row > to_row
+    or (from_row == to_row and from_column >= end_column)
 
   local selection = {
-    start = { row = start_row, column = start_column },
-    stop = { row = stop_row, column = end_column },
+    from = { row = from_row, column = from_column },
+    to = { row = to_row, column = end_column },
   }
 
-  local function swap_start_stop()
-    selection.start, selection.stop = selection.stop, selection.start
+  local function swap_from_to()
+    selection.from, selection.to = selection.to, selection.from
   end
 
   if is_selection_inversed then
-    swap_start_stop()
+    swap_from_to()
   end
 
   return selection
@@ -52,44 +56,60 @@ end
 --- @param text string
 M.set_line_text = function(selection, text)
   local offset = {
-    start = {
-      row = selection.start.row - 1,
-      column = selection.start.column - 1,
+    from = {
+      row = selection.from.row - 1,
+      column = selection.from.column - 1,
     },
-    stop = {
-      row = selection.stop.row - 1,
-      column = selection.stop.column - 1,
+    to = {
+      row = selection.to.row - 1,
+      column = selection.to.column - 1,
     },
   }
 
-  if selection.stop.column == maximum_line_length then
+  if selection.to.column == maximum_line_length then
+    -- When selection extends to end of line, replace entire lines.
     vim.api.nvim_buf_set_lines(
       0,
-      offset.start.row,
-      selection.stop.row,
+      offset.from.row,
+      selection.to.row,
       false,
       { text }
     )
   else
-    local ok = pcall(
+    -- Try to set text with original column range.
+    local ok, err = pcall(
       vim.api.nvim_buf_set_text,
       0,
-      offset.start.row,
-      offset.start.column,
-      offset.stop.row,
-      selection.stop.column,
+      offset.from.row,
+      offset.from.column,
+      offset.to.row,
+      selection.to.column,
       { text }
     )
 
+    -- If that fails (likely due to column bounds), try with adjusted range.
     if not ok then
-      vim.api.nvim_buf_set_text(
+      local fallback_ok, fallback_err = pcall(
+        vim.api.nvim_buf_set_text,
         0,
-        offset.start.row,
-        offset.start.column,
-        offset.stop.row,
-        offset.stop.column,
+        offset.from.row,
+        offset.from.column,
+        offset.to.row,
+        offset.to.column,
         { text }
       )
+
+      -- If both attempts fail, notify user with error details.
+      if not fallback_ok then
+        vim.notify(
+          string.format(
+            'Failed to set text: %s (fallback: %s)',
+            err or 'unknown error',
+            fallback_err or 'unknown error'
+          ),
+          vim.log.levels.ERROR
+        )
+      end
     end
   end
 end

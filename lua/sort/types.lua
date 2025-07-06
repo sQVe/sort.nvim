@@ -1,13 +1,15 @@
 --- @class Config
---- @field public delimiters table<string, integer>
+--- @field public delimiters string[]
+--- @field public keymap string
+--- @field public mappings table
 
 --- @class SelectionFragment
 --- @field public row integer
 --- @field public column integer
 
 --- @class Selection
---- @field public start SelectionFragment
---- @field public stop SelectionFragment
+--- @field public from SelectionFragment
+--- @field public to SelectionFragment
 
 --- @class SortOptions
 --- @field public delimiter? string

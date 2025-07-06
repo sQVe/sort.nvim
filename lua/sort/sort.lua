@@ -4,56 +4,29 @@ local utils = require('sort.utils')
 
 local M = {}
 
---- Get sorted words (text without leading and trailing whitespace).
---- @param matches string[]
+--- Compare two strings according to sort options.
+--- @param a string
+--- @param b string
 --- @param options SortOptions
---- @return string[] sorted_words
-M.get_sorted_words = function(matches, options)
-  local sorted_words = {}
+--- @return boolean
+local function compare_strings(a, b, options)
+  local sort_a = options.ignore_case and string.lower(a) or a
+  local sort_b = options.ignore_case and string.lower(b) or b
 
-  for _, match in ipairs(matches) do
-    table.insert(
-      sorted_words,
-      utils.trim_leading_and_trailing_whitespace(match)
-    )
-  end
+  if options.numerical then
+    local na = utils.parse_number(sort_a, options.numerical)
+    local nb = utils.parse_number(sort_b, options.numerical)
 
-  table.sort(sorted_words, function(a, b)
-    a = options.ignore_case and string.lower(a) or a
-    b = options.ignore_case and string.lower(b) or b
-
-    if options.numerical then
-      local na = utils.parse_number(a, options.numerical)
-      local nb = utils.parse_number(b, options.numerical)
-
-      if na and nb then
-        return na < nb
-      elseif na then
-        return false
-      elseif nb then
-        return true
-      end
+    if na and nb then
+      return na < nb
+    elseif na then
+      return false
+    elseif nb then
+      return true
     end
-
-    return a < b
-  end)
-
-  return sorted_words
-end
-
---- Get list of leading and trailing whitespaces.
---- @param matches string[]
---- @return string[] leading_whitespaces, string[] trailing_whitespaces
-M.get_whitespaces_around_word = function(matches)
-  local leading_whitespaces = {}
-  local trailing_whitespaces = {}
-
-  for _, match in ipairs(matches) do
-    table.insert(leading_whitespaces, utils.get_leading_whitespace(match))
-    table.insert(trailing_whitespaces, utils.get_trailing_whitespace(match))
   end
 
-  return leading_whitespaces, trailing_whitespaces
+  return sort_a < sort_b
 end
 
 --- Sort by top most matching delimiter.
@@ -61,58 +34,200 @@ end
 --- @param options SortOptions
 --- @return string sorted_text
 M.delimiter_sort = function(text, options)
+  local original_text = text
   local user_config = config.get_user_config()
   local delimiters = options.delimiter and { options.delimiter }
     or user_config.delimiters
 
-  local leading_whitespaces, has_leading_delimiter, matches, sorted_words, top_translated_delimiter, trailing_whitespaces, has_trailing_delimiter
+  local has_leading_delimiter, has_trailing_delimiter, matches, top_translated_delimiter
+
   for _, delimiter in ipairs(delimiters) do
     top_translated_delimiter = utils.translate_delimiter(delimiter)
     matches = utils.split_by_delimiter(text, top_translated_delimiter)
-    local delimiterCount = #matches - 1
 
-    if delimiterCount > 0 then
-      leading_whitespaces, trailing_whitespaces = M.get_whitespaces_around_word(
-        matches
-      )
-      sorted_words = M.get_sorted_words(matches, options)
-      has_leading_delimiter = string.match(
-        text,
-        '^' .. top_translated_delimiter
-      )
-      has_trailing_delimiter = string.match(
-        text,
-        top_translated_delimiter .. '$'
-      )
+    if #matches > 1 then
+      has_leading_delimiter =
+        string.match(text, '^' .. top_translated_delimiter)
+      has_trailing_delimiter =
+        string.match(text, top_translated_delimiter .. '$')
       break
     end
   end
 
-  if sorted_words == nil then
+  if matches == nil or #matches <= 1 then
     return text
   end
 
-  if options.reverse then
-    sorted_words = utils.reverse_list(sorted_words)
+  -- Special case: if we have only 2 matches and one is empty,
+  -- this indicates whitespace adjacent to a single item, not a list to sort.
+  -- BUT only if this is from a text object selection (like 'aw'), not a manual selection.
+  if #matches == 2 and (matches[1] == '' or matches[2] == '') then
+    -- Additional check: if the non-empty match is a single word, don't sort.
+    local non_empty_match = matches[1] ~= '' and matches[1] or matches[2]
+    if non_empty_match and not string.match(non_empty_match, '%s') then
+      return text
+    end
+  end
+
+
+  -- Create array of items with their whitespace preserved.
+  local items = {}
+  for i, match in ipairs(matches) do
+    local leading_ws = utils.get_leading_whitespace(match)
+    local trailing_ws = utils.get_trailing_whitespace(match)
+    local trimmed = utils.trim_leading_and_trailing_whitespace(match)
+
+    -- For space delimiters, skip empty segments (they represent extra spaces).
+    if trimmed == '' and top_translated_delimiter == ' ' then
+      -- Skip empty segments for space-separated lists.
+    elseif trimmed == '' then
+      -- For other delimiters, preserve whitespace-only segments.
+      table.insert(items, {
+        original = match,
+        trimmed = trimmed,
+        leading_ws = '',
+        trailing_ws = match,
+        original_position = i,
+      })
+    else
+      table.insert(items, {
+        original = match,
+        trimmed = trimmed,
+        leading_ws = leading_ws,
+        trailing_ws = trailing_ws,
+        original_position = i,
+      })
+    end
+  end
+
+  -- Check if sorting will change the order
+  local original_order = {}
+  for i, item in ipairs(items) do
+    original_order[i] = item.original_position
+  end
+
+  -- Sort items by their trimmed content.
+  table.sort(items, function(a, b)
+    if options.reverse then
+      return compare_strings(b.trimmed, a.trimmed, options)
+    else
+      return compare_strings(a.trimmed, b.trimmed, options)
+    end
+  end)
+
+  -- Check if order actually changed.
+  local order_changed = false
+  for i, item in ipairs(items) do
+    if item.original_position ~= original_order[i] then
+      order_changed = true
+      break
+    end
+  end
+
+  -- Apply smart whitespace normalization (order changed OR inconsistent spacing with alignment).
+  local user_config = config.get_user_config()
+  local whitespace_config = user_config.whitespace or {}
+  local needs_normalization = order_changed
+
+  -- Special case: if we have alignment whitespace mixed with inconsistent non-alignment whitespace, normalize.
+  if not needs_normalization then
+    local alignment_threshold = whitespace_config.alignment_threshold or 3
+    local has_alignment = false
+    local non_alignment_patterns = {}
+    
+    for _, item in ipairs(items) do
+      if item.trimmed ~= '' then
+        if string.len(item.leading_ws) >= alignment_threshold then
+          has_alignment = true
+        else
+          non_alignment_patterns[item.leading_ws] = true
+        end
+      end
+    end
+    
+    -- Count non-alignment patterns.
+    local pattern_count = 0
+    for _ in pairs(non_alignment_patterns) do
+      pattern_count = pattern_count + 1
+    end
+    
+    -- If we have alignment whitespace AND inconsistent non-alignment patterns, normalize.
+    -- OR if we have multiple space-only patterns of different lengths (inconsistent spacing).
+    if has_alignment and pattern_count > 1 then
+      needs_normalization = true
+    elseif pattern_count > 1 then
+      -- Check if all non-alignment patterns are just spaces of different lengths.
+      local all_spaces = true
+      for pattern, _ in pairs(non_alignment_patterns) do
+        if pattern ~= '' and not string.match(pattern, '^%s+$') then
+          all_spaces = false
+          break
+        elseif pattern ~= '' and string.match(pattern, '[^\32]') then -- Contains non-space whitespace.
+          all_spaces = false
+          break
+        end
+      end
+      
+      if all_spaces then
+        needs_normalization = true
+      end
+    end
+  end
+
+  if needs_normalization then
+    local alignment_threshold = whitespace_config.alignment_threshold or 3
+
+    -- Collect all leading whitespace patterns.
+    local whitespace_patterns = {}
+    for _, item in ipairs(items) do
+      if item.trimmed ~= '' then -- Skip whitespace-only segments.
+        table.insert(whitespace_patterns, item.leading_ws)
+      end
+    end
+
+    -- Detect dominant whitespace pattern.
+    local dominant_pattern = utils.detect_dominant_whitespace(
+      whitespace_patterns,
+      alignment_threshold,
+      top_translated_delimiter
+    )
+
+    -- Normalize whitespace for each item.
+    for i, item in ipairs(items) do
+      if item.trimmed ~= '' then -- Skip whitespace-only segments.
+        -- For comma-separated values, first item should have no leading whitespace.
+        if i == 1 and top_translated_delimiter == ',' then
+          item.leading_ws = ''
+        else
+          item.leading_ws = utils.normalize_whitespace(
+            item.leading_ws,
+            dominant_pattern,
+            alignment_threshold
+          )
+        end
+      end
+    end
   end
 
   local sorted_fragments = {}
   if options.unique then
-    local unique_indexes = utils.find_unique_indexes(sorted_words)
-
-    for _, idx in ipairs(unique_indexes) do
-      table.insert(
-        sorted_fragments,
-        leading_whitespaces[idx]
-          .. sorted_words[idx]
-          .. trailing_whitespaces[idx]
-      )
+    local seen = {}
+    for _, item in ipairs(items) do
+      local key = options.ignore_case and string.lower(item.trimmed)
+        or item.trimmed
+      if not seen[key] then
+        seen[key] = true
+        table.insert(
+          sorted_fragments,
+          item.leading_ws .. item.trimmed .. item.trailing_ws
+        )
+      end
     end
   else
-    for idx, sorted_word in ipairs(sorted_words) do
+    for _, item in ipairs(items) do
       table.insert(
         sorted_fragments,
-        leading_whitespaces[idx] .. sorted_word .. trailing_whitespaces[idx]
+        item.leading_ws .. item.trimmed .. item.trailing_ws
       )
     end
   end

@@ -2,23 +2,31 @@ local config = require('sort.config')
 local interface = require('sort.interface')
 local sort = require('sort.sort')
 local utils = require('sort.utils')
+local mappings = require('sort.mappings')
 
 local M = {}
 
-M.setup = config.setup
+M.setup = function(opts)
+  config.setup(opts)
+  mappings.setup()
+
+  -- Set up repeat functionality
+  local repeat_mod = require('sort.repeat')
+  repeat_mod.setup()
+end
 
 --- Sort by either lines or specified delimiters.
 --- @param bang string
 --- @param arguments string
 M.sort = function(bang, arguments)
   local selection = interface.get_visual_selection()
-  local is_multiple_lines_selected = selection.start.row < selection.stop.row
+  local is_multiple_lines_selected = selection.from.row < selection.to.row
 
   if
-    selection.start.row == 0
+    selection.from.row == 0
     or (
-      selection.start.row == selection.stop.row
-      and selection.start.column == selection.stop.column
+      selection.from.row == selection.to.row
+      and selection.from.column == selection.to.column
     )
   then
     return

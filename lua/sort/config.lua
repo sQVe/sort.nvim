@@ -1,8 +1,24 @@
 local M = {}
 
 --- @type Config
-local defaults = {}
-defaults.delimiters = { ',', '|', ';', ':', 's', 't' }
+local defaults = {
+  delimiters = { ',', '|', ';', ':', 's', 't' },
+  keymap = 'go',
+  whitespace = {
+    alignment_threshold = 3,
+  },
+  mappings = {
+    operator = 'go',
+    textobject = {
+      inner = 'is',
+      around = 'as',
+    },
+    motion = {
+      next_delimiter = ']s',
+      prev_delimiter = '[s',
+    },
+  },
+}
 
 local user_config = defaults
 
@@ -20,6 +36,5 @@ M.setup = function(overrides)
 
   return user_config
 end
-
 
 return M
