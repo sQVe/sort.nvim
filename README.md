@@ -1,50 +1,30 @@
 # 🔠 sort.nvim
 
-**Sort** is a sorting plugin for [Neovim](https://neovim.io) that provides a simple command to mimic `:sort` and supports both line-wise and delimiter sorting. This plugin intelligently selects a sorting strategy by using a configurable priority list, minimizing manual input and covering most sorting cases with just the `:Sort` command on a range.
+**Sort** is a sorting plugin for [Neovim](https://neovim.io) that provides intelligent sorting capabilities with support for both line-wise and delimiter-based sorting. This plugin automatically selects the most appropriate sorting strategy using a configurable priority system, making sorting efficient and intuitive.
 
 ## ❓ Why
 
-- Supports delimiter sorting.
-- Intelligently selects a sorting strategy using a configurable priority list.
-- Minimizes manual input required from the user.
-- Efficient and lightweight.
-- Mimics the functionality of Neovim's built-in `:sort` command where possible.
-- Helps to satisfy the perfectionist in you by ensuring your text is neatly sorted.
+- **Delimiter-aware sorting**: Automatically detects and sorts by delimiters like commas, pipes, colons, and more.
+- **Intelligent strategy selection**: Uses a configurable priority list to choose the best sorting approach.
+- **Natural sorting support**: Handles strings with numbers naturally (e.g., "item1", "item2", "item10").
+- **Minimal user input**: The `:Sort` command covers most sorting scenarios without additional configuration.
+- **Vim-compatible**: Mirrors Neovim's built-in `:sort` command functionality where applicable.
+- **Motion-based operations**: Provides text objects and motions for efficient sorting workflows.
+- **Whitespace preservation**: Intelligently handles and normalizes whitespace in sorted content.
 
 ## 📦 Installation
 
-#### [packer](https://github.com/wbthomason/packer.nvim)
+#### [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
--- Lua.
-
-use({
+{
   'sQVe/sort.nvim',
-
-  -- Optional setup for overriding defaults.
   config = function()
     require('sort').setup({
-      -- Input configuration here.
-      -- Refer to the configuration section below for options.
+      -- Optional configuration overrides.
     })
   end,
-})
-```
-
-#### [vim-plug](https://github.com/junegunn/vim-plug)
-
-```vim
-" Vim Script.
-
-Plug 'sQVe/sort.nvim'
-
-" Optional setup for overriding defaults.
-lua << EOF
-  require("sort").setup({
-    -- Input configuration here.
-    -- Refer to the configuration section below for options.
-  })
-EOF
+}
 ```
 
 ## ⚙ Configuration
@@ -60,148 +40,172 @@ EOF
     '|',
     ';',
     ':',
-    's', -- Space
-    't'  -- Tab
-   }
+    's', -- Space.
+    't'  -- Tab.
+  },
+
+  -- Whitespace handling configuration.
+  whitespace = {
+    -- When whitespace before items is >= this many characters, it's considered
+    -- alignment and is preserved. Otherwise, whitespace is normalized to be
+    -- consistent when sorting changes item order.
+    alignment_threshold = 3,
+  },
+
+  -- Default keymappings (set to false to disable).
+  mappings = {
+    operator = 'go',
+    textobject = {
+      inner = 'io',
+      around = 'ao',
+    },
+    motion = {
+      next_delimiter = ']o',
+      prev_delimiter = '[o',
+    },
+  },
 }
 ```
 
 ## 📗 Usage
 
-https://user-images.githubusercontent.com/2284724/145567686-3b52978c-58fe-4f32-ad27-c2b1060870ba.mp4
+### Command-based sorting
 
-Sorting with the **Sort** plugin is made easy through the provided `:Sort` command. The plugin utilizes two different strategies depending on the visual selection:
+The `:Sort` command adapts its behavior based on your selection:
 
-- Multiple lines
-
-  When selecting multiple lines, all arguments provided to `:Sort` are fed to the built-in `:sort` command, thereby mirroring all of the features provided by the built-in sort. See `:help :sort` for usage and options.
-
-- Single line
-
-  ```
-  :[range]Sort[!] [delimiter][b][i][n][o][u][x]
-  ```
-
-  - Use `[!]` to reverse the sort order.
-  - Use `[delimiter]` to manually set the delimiter instead of iterating over `config.delimiters` and sorting by the highest priority delimiter. Valid delimiters include:
-    - Any punctuation character (!, ?, &, ...), matching the `%p` lua pattern character class.
-    - `s`: Space
-    - `t`: Tab
-  - Use `[b]` to sort based on the first binary number in the word.
-  - Use `[i]` to ignore the case when sorting.
-  - Use `[n]` to sort based on the first decimal number in the word.
-  - Use `[o]` to sort based on the first octal number in the word.
-  - Use `[u]` to only keep the first instance of words within the selection. Leading and trailing whitespace are not considered when testing for uniqueness.
-  - Use `[x]` to sort based on the first hexadecimal number in the word. A leading `0x` or `0X` is ignored.
-
-## ⌨️ Keybinding
-
-**Sort** provides both command-based and motion-based sorting approaches.
-
-### Command-based sorting (traditional)
-
-For backward compatibility, you can still use the `:Sort` command. Here's how to set up keybindings:
+#### Multiple lines
+When selecting multiple lines, all arguments are passed to Neovim's built-in `:sort` command:
 
 ```vim
-" Vim Script.
-nnoremap <silent> <leader>s <Cmd>Sort<CR>
-vnoremap <silent> <leader>s <Esc><Cmd>Sort<CR>
+:[range]Sort[!] [flags]
 ```
 
-```lua
--- Lua.
-vim.keymap.set('n', '<leader>s', '<Cmd>Sort<CR>', { silent = true })
-vim.keymap.set('v', '<leader>s', '<Esc><Cmd>Sort<CR>', { silent = true })
+See `:help :sort` for complete documentation of flags and options.
+
+#### Single line (delimiter sorting)
+When selecting within a single line, the plugin performs delimiter-based sorting:
+
+```vim
+:[range]Sort[!] [delimiter][flags]
 ```
 
-### Motion-based sorting (recommended)
+**Available flags:**
+- `!` - Reverse the sort order
+- `[delimiter]` - Manually specify delimiter (any punctuation, `s` for space, `t` for tab)
+- `b` - Sort by binary numbers
+- `i` - Ignore case
+- `n` - Sort by decimal numbers
+- `o` - Sort by octal numbers
+- `u` - Keep only unique items
+- `x` - Sort by hexadecimal numbers
+- `z` - Natural sorting (handles numbers in strings properly)
 
-**Sort** now provides motion mappings that work like native Vim operators. By default, the following mappings are available when you call `require('sort').setup()`:
+### Motion-based sorting
+
+**Sort** provides Vim-style operators and text objects for efficient sorting:
 
 | Mapping | Mode | Description |
 |---------|------|-------------|
 | `go` | Normal | Sort operator (use with any motion) |
 | `go` | Visual | Sort visual selection |
 | `gogo` | Normal | Sort current line |
-| `is` | Operator/Visual | Inner sortable region textobject |
-| `as` | Operator/Visual | Around sortable region textobject |
-| `]s` | Normal/Visual/Operator | Jump to next delimiter |
-| `[s` | Normal/Visual/Operator | Jump to previous delimiter |
+| `io` | Operator/Visual | Inner sortable region text object |
+| `ao` | Operator/Visual | Around sortable region text object |
+| `]o` | Normal/Visual/Operator | Jump to next delimiter |
+| `[o` | Normal/Visual/Operator | Jump to previous delimiter |
 
-#### Examples:
+#### Examples
 
 ```vim
-" Sort a word
+" Sort a word.
 gow
 
-" Sort inside parentheses
+" Sort inside parentheses.
 go(
 
-" Sort 3 lines down
+" Sort 3 lines down.
 go3j
 
-" Sort inside quotes using textobject
-gois
+" Sort inside quotes using text object.
+goio
 
-" Sort around delimiters using textobject
-goas
+" Sort around delimiters using text object.
+goao
 
-" Sort a paragraph
+" Sort a paragraph.
 gop
 
-" Quick line sort
+" Quick line sort.
 gogo
 ```
 
 ### Customizing mappings
 
-You can customize or disable the mappings by configuring them in setup:
+You can customize the default mappings:
 
 ```lua
 require('sort').setup({
   mappings = {
-    operator = 'gs', -- Change operator from 'go' to 'gs'
+    operator = 'gs',
     textobject = {
-      inner = 'ii', -- Change from 'is' to 'ii'
-      around = 'ai', -- Change from 'as' to 'ai'
+      inner = 'ii',
+      around = 'ai',
     },
     motion = {
-      next_delimiter = ']d', -- Change from ']s' to ']d'
-      prev_delimiter = '[d', -- Change from '[s' to '[d'
+      next_delimiter = ']d',
+      prev_delimiter = '[d',
     },
   },
 })
 ```
 
-To disable mappings entirely, set them to `false`:
+To disable mappings entirely:
 
 ```lua
 require('sort').setup({
   mappings = {
-    operator = false, -- Disable operator mapping
-    textobject = false, -- Disable textobject mappings
-    motion = false, -- Disable motion mappings
+    operator = false,
+    textobject = false,
+    motion = false,
   },
 })
 ```
+
+## 🚀 Features
+
+### Natural Sorting
+
+Use the `z` flag to enable natural sorting, which handles numbers in strings properly:
+
+```
+" Before: item1, item10, item2
+" After:  item1, item2, item10
+:Sort z
+```
+
+### Intelligent Whitespace Handling
+
+The plugin automatically normalizes whitespace in sorted content while preserving alignment when appropriate. The `alignment_threshold` setting controls when whitespace is considered significant for alignment purposes.
+
+### Delimiter Priority
+
+When multiple delimiters are present, the plugin uses the configured priority order to determine which delimiter to sort by. This ensures consistent behavior across different text patterns.
 
 ## 🤝 Contributing
 
-All contributions to Sort are greatly appreciated, whether it's a bug fix or a feature request. If you would like to contribute, please don't hesitate to reach out via the [issue tracker](https://github.com/sQVe/sort.nvim/issues).
+All contributions are welcome! Whether it's bug reports, feature requests, or pull requests, your help makes **Sort** better for everyone.
 
-Before making a pull request, please consider the following:
-
-- Follow the existing code style and formatting conventions .
-  - Install [stylua](https://github.com/johnnymorganz/stylua) to ensure proper formatting.
-- Write clear and concise commit messages that describe the changes you've made.
+Before contributing:
+- Follow the existing code style and formatting conventions
+- Install [stylua](https://github.com/johnnymorganz/stylua) for consistent formatting
+- Write clear commit messages describing your changes
+- Add tests for new functionality when applicable
 
 ## 🏁 Roadmap
 
-- [x] Extend support for delimiter sorting to mirror the options available in `:sort`:
-  - [x] `b` option to sort by binary (2).
-  - [x] `n` option to sort by decimal (10).
-  - [x] `o` option to sort by octal (8).
-  - [x] `x` option to sort by hexidecimal (16).
-- [x] Improve test coverage to ensure the stability and reliability of the plugin.
-- [x] Add opt-in motion mappings to enable users to trigger Sort commands more efficiently using keybindings.
-- [ ] Add support for natural sorting to provide more intuitive sorting of strings that include numeric values.
+- [x] **Delimiter sorting**: Support for multiple delimiter types with priority-based selection
+- [x] **Numerical sorting**: Support for binary, decimal, octal, and hexadecimal number sorting
+- [x] **Motion mappings**: Vim-style operators and text objects for efficient sorting
+- [x] **Natural sorting**: Intuitive sorting of strings containing numbers
+- [x] **Whitespace handling**: Intelligent whitespace preservation and normalization
+- [x] **Comprehensive testing**: Full test coverage for stability and reliability
