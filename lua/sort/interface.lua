@@ -4,12 +4,6 @@ local M = {}
 -- This is 2^31 - 1, the maximum value for a 32-bit signed integer.
 local maximum_line_length = 2147483647
 
---- Execute builtin sort command on range.
---- @param bang string
---- @param arguments string
-M.execute_builtin_sort = function(bang, arguments)
-  vim.cmd("'<,'>sort" .. bang .. ' ' .. arguments)
-end
 
 --- Get text between two columns.
 --- @param selection Selection

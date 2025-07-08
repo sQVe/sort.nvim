@@ -130,7 +130,6 @@ M.delimiter_sort = function(text, options)
 
   -- Apply smart whitespace normalization (order changed OR inconsistent spacing with alignment).
   -- For natural sorting, preserve original whitespace even if order changed
-  local user_config = config.get_user_config()
   local whitespace_config = user_config.whitespace or {}
   local needs_normalization = order_changed and not options.natural
 

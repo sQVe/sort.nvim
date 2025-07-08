@@ -3,24 +3,6 @@ local M = {}
 local leading_whitespace_pattern = '^%s+'
 local trailing_whitespace_pattern = '%s+$'
 
---- Find all indexes in a list that hold a unique value.
---- @param list string[]
---- @param ignore_case? boolean
---- @return integer[] unique_indexes
-M.find_unique_indexes = function(list, ignore_case)
-  local unique_indexes = {}
-  local value_map = {}
-
-  for idx, value in ipairs(list) do
-    local key = ignore_case and string.lower(value) or value
-    if value_map[key] == nil then
-      value_map[key] = true
-      unique_indexes[#unique_indexes + 1] = idx
-    end
-  end
-
-  return unique_indexes
-end
 
 --- Get leading whitespaces.
 --- @param text string
@@ -40,11 +22,6 @@ M.get_trailing_whitespace = function(text)
   return trailing_whitespace or ''
 end
 
---- Check if in visual mode.
---- @return boolean
-M.is_visual_mode = function()
-  return vim.tbl_contains({ 'V', 'v', '\22' }, vim.fn.mode(1))
-end
 
 --- Split by translated delimiter.
 --- @param text string
@@ -75,19 +52,6 @@ M.split_by_delimiter = function(text, translated_delimiter)
   return matches
 end
 
---- Reverse a list.
---- @param list string[]
---- @return string[] reversed_list
-M.reverse_list = function(list)
-  local reversed_list = {}
-  local list_length = #list
-
-  for i = list_length, 1, -1 do
-    reversed_list[list_length - i + 1] = list[i]
-  end
-
-  return reversed_list
-end
 
 --- Parse options provided via bang and/or arguments.
 --- @param bang string
