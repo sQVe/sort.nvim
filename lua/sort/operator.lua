@@ -27,11 +27,11 @@ local function get_text_for_motion(
 
       local extracted_text
       if is_visual_marks then
-        -- Visual marks are 0-based, string.sub is 1-based, so add 1
-        -- Also add 1 to end_pos to make selection inclusive
+        -- Visual marks are 0-based, string.sub is 1-based, so add 1.
+        -- Also add 1 to end_pos to make selection inclusive.
         extracted_text = string.sub(line, start_pos[2] + 1, end_pos[2] + 1)
       else
-        -- Operator marks are 0-based, convert to 1-based for string.sub
+        -- Operator marks are 0-based, convert to 1-based for string.sub.
         extracted_text = string.sub(line, start_pos[2] + 1, end_pos[2] + 1)
       end
 
@@ -154,13 +154,19 @@ local function set_text_for_motion(
         table.insert(replacement_lines, before_text .. lines[1] .. after_text)
       else
         -- Multi-line replacement
-        if is_visual_marks then
-          lines[1] = string.sub(start_line, 1, start_pos[2]) .. lines[1]
-          lines[#lines] = lines[#lines] .. string.sub(end_line, end_pos[2] + 2)
-        else
-          lines[1] = string.sub(start_line, 1, start_pos[2]) .. lines[1]
-          lines[#lines] = lines[#lines] .. string.sub(end_line, end_pos[2] + 2)
+        -- For line-sorted multiline content, preserve the exact sorted lines
+        -- and only add prefix/suffix if they don't interfere with line structure.
+        local before_text = string.sub(start_line, 1, start_pos[2])
+        local after_text = string.sub(end_line, end_pos[2] + 2)
+
+        -- Only add prefix/suffix if they're meaningful (non-whitespace).
+        if string.match(before_text, '%S') then
+          lines[1] = before_text .. lines[1]
         end
+        if string.match(after_text, '%S') then
+          lines[#lines] = lines[#lines] .. after_text
+        end
+
         replacement_lines = lines
       end
 
@@ -274,19 +280,24 @@ M.sort_operator = function(motion_type, from_visual)
     return
   end
 
-  -- Parse default options (can be extended later for operator arguments)
+  -- Parse default options (can be extended later for operator arguments).
   local options = utils.parse_arguments('', '')
 
   local sorted_text
+  local lines = vim.split(text, '\n')
+
   if effective_motion_type == 'line' then
     -- For line-wise motions, we need to handle each line separately
     -- but still use delimiter sorting if it's a single line selection.
-    local lines = vim.split(text, '\n')
     if #lines == 1 then
       sorted_text = sort_text_with_trailing_delimiter(text, options)
     else
       -- For multi-line, use proper line sorting.
-      sorted_text = sort.line_sort_text(text, options)
+      -- For line sorting, disable numerical sorting to get alphabetical sorting.
+      local line_options = vim.tbl_deep_extend('force', options, {
+        numerical = false,
+      })
+      sorted_text = sort.line_sort_text(text, line_options)
     end
   else
     sorted_text = sort_text_with_trailing_delimiter(text, options)

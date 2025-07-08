@@ -40,6 +40,17 @@ local function setup_operator_mappings(mappings)
       start_col, end_col = end_col, start_col
     end
 
+    -- For line mode, adjust the end position to include the full last line.
+    if detected_mode == 'line' then
+      local last_line = vim.api.nvim_buf_get_lines(
+        0,
+        end_row - 1,
+        end_row,
+        false
+      )[1] or ''
+      end_col = string.len(last_line)
+    end
+
     -- Exit visual mode
     vim.cmd('normal! \27')
 

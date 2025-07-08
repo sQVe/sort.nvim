@@ -986,7 +986,10 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('v1.2.0,v1.2.0-alpha.1,v1.10.0-beta.2,v1.10.0-beta.10', result)
+      assert.are.equal(
+        'v1.2.0,v1.2.0-alpha.1,v1.10.0-beta.2,v1.10.0-beta.10',
+        result
+      )
     end)
 
     it('should handle natural sorting with whitespace preservation', function()
@@ -1005,7 +1008,8 @@ describe('sort', function()
     end)
 
     it('should handle natural sorting with mixed numeric patterns', function()
-      local text = 'chapter1.section10,chapter10.section2,chapter2.section1,chapter1.section2'
+      local text =
+        'chapter1.section10,chapter10.section2,chapter2.section1,chapter1.section2'
       local options = {
         delimiter = nil,
         ignore_case = false,
@@ -1016,11 +1020,15 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('chapter1.section2,chapter1.section10,chapter2.section1,chapter10.section2', result)
+      assert.are.equal(
+        'chapter1.section2,chapter1.section10,chapter2.section1,chapter10.section2',
+        result
+      )
     end)
 
     it('should handle natural sorting with path-like strings', function()
-      local text = 'path/to/file10.txt,path/to/file2.txt,path/to/file1.txt,path/to/file20.txt'
+      local text =
+        'path/to/file10.txt,path/to/file2.txt,path/to/file1.txt,path/to/file20.txt'
       local options = {
         delimiter = nil,
         ignore_case = false,
@@ -1031,7 +1039,10 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('path/to/file1.txt,path/to/file2.txt,path/to/file10.txt,path/to/file20.txt', result)
+      assert.are.equal(
+        'path/to/file1.txt,path/to/file2.txt,path/to/file10.txt,path/to/file20.txt',
+        result
+      )
     end)
 
     it('should handle natural sorting with zero-padded numbers', function()
@@ -1049,20 +1060,23 @@ describe('sort', function()
       assert.are.equal('item001,item002,item010,item100', result)
     end)
 
-    it('should handle natural sorting with mixed zero-padded and non-padded', function()
-      local text = 'item1,item010,item2,item100'
-      local options = {
-        delimiter = nil,
-        ignore_case = false,
-        numerical = nil,
-        reverse = false,
-        unique = false,
-        natural = true,
-      }
+    it(
+      'should handle natural sorting with mixed zero-padded and non-padded',
+      function()
+        local text = 'item1,item010,item2,item100'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+          natural = true,
+        }
 
-      local result = sort.delimiter_sort(text, options)
-      assert.are.equal('item1,item2,item010,item100', result)
-    end)
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('item1,item2,item010,item100', result)
+      end
+    )
   end)
 
   describe('natural sorting for lines', function()
@@ -1172,7 +1186,8 @@ describe('sort', function()
     end)
 
     it('should handle complex natural line sorting', function()
-      local text = 'chapter1.section10\nchapter10.section2\nchapter2.section1\nchapter1.section2'
+      local text =
+        'chapter1.section10\nchapter10.section2\nchapter2.section1\nchapter1.section2'
       local options = {
         delimiter = nil,
         ignore_case = false,
@@ -1183,7 +1198,10 @@ describe('sort', function()
       }
 
       local result = sort.line_sort_text(text, options)
-      assert.are.equal('chapter1.section2\nchapter1.section10\nchapter2.section1\nchapter10.section2', result)
+      assert.are.equal(
+        'chapter1.section2\nchapter1.section10\nchapter2.section1\nchapter10.section2',
+        result
+      )
     end)
   end)
 end)

@@ -139,6 +139,121 @@ describe('operator functionality', function()
       local result = get_buffer_content()
       assert.are.equal('prefix apple banana zebra suffix', result[1])
     end)
+
+    it('should sort multiline visual line selection alphabetically', function()
+      setup_buffer({
+        '        -- Visual marks are 0-based, string.sub is 1-based, so add 1',
+        '        -- Also add 1 to end_pos to make selection inclusive',
+        '        extracted_text = string.sub(line, start_pos[2] + 1, end_pos[2] + 1)',
+      })
+
+      -- Simulate visual line selection of lines 1-2
+      -- For line mode, end_col should be set to the length of the last line
+      local last_line =
+        '        -- Also add 1 to end_pos to make selection inclusive'
+      set_visual_marks(1, 1, 2, string.len(last_line))
+
+      operator.sort_operator('line', true)
+
+      local result = get_buffer_content()
+      assert.are.equal(
+        '        -- Also add 1 to end_pos to make selection inclusive',
+        result[1]
+      )
+      assert.are.equal(
+        '        -- Visual marks are 0-based, string.sub is 1-based, so add 1',
+        result[2]
+      )
+      assert.are.equal(
+        '        extracted_text = string.sub(line, start_pos[2] + 1, end_pos[2] + 1)',
+        result[3]
+      )
+    end)
+
+    it(
+      'should sort multiline visual line selection with different indentation',
+      function()
+        setup_buffer({
+          '    -- Second comment line',
+          '  -- First comment line',
+          '      -- Third comment line',
+        })
+
+        -- Simulate visual line selection of all lines
+        local last_line = '      -- Third comment line'
+        set_visual_marks(1, 1, 3, string.len(last_line))
+
+        operator.sort_operator('line', true)
+
+        local result = get_buffer_content()
+        assert.are.equal('  -- First comment line', result[1])
+        assert.are.equal('    -- Second comment line', result[2])
+        assert.are.equal('      -- Third comment line', result[3])
+      end
+    )
+
+    it(
+      'should sort multiline visual line selection with mixed content',
+      function()
+        setup_buffer({
+          'zebra = 1',
+          'apple = 2',
+          'banana = 3',
+        })
+
+        -- Simulate visual line selection of all lines
+        local last_line = 'banana = 3'
+        set_visual_marks(1, 1, 3, string.len(last_line))
+
+        operator.sort_operator('line', true)
+
+        local result = get_buffer_content()
+        assert.are.equal('apple = 2', result[1])
+        assert.are.equal('banana = 3', result[2])
+        assert.are.equal('zebra = 1', result[3])
+      end
+    )
+  end)
+
+  describe('alphabetical sorting over numerical', function()
+    it('should sort lines alphabetically not numerically', function()
+      setup_buffer({
+        'line 10',
+        'line 2',
+        'line 1',
+      })
+
+      -- Simulate visual line selection
+      local last_line = 'line 1'
+      set_visual_marks(1, 1, 3, string.len(last_line))
+
+      operator.sort_operator('line', true)
+
+      local result = get_buffer_content()
+      -- Should be alphabetical (1, 10, 2) not numerical (1, 2, 10)
+      assert.are.equal('line 1', result[1])
+      assert.are.equal('line 10', result[2])
+      assert.are.equal('line 2', result[3])
+    end)
+
+    it('should sort comment lines alphabetically', function()
+      setup_buffer({
+        '-- Z comment',
+        '-- A comment',
+        '-- B comment',
+      })
+
+      -- Simulate visual line selection
+      local last_line = '-- B comment'
+      set_visual_marks(1, 1, 3, string.len(last_line))
+
+      operator.sort_operator('line', true)
+
+      local result = get_buffer_content()
+      assert.are.equal('-- A comment', result[1])
+      assert.are.equal('-- B comment', result[2])
+      assert.are.equal('-- Z comment', result[3])
+    end)
   end)
 
   describe('edge cases', function()
@@ -313,16 +428,19 @@ describe('operator functionality', function()
       assert.are.equal('b, d,   e, f, l', result[1])
     end)
 
-    it('should handle VM-004: mixed delimiters (comma priority over space)', function()
-      setup_buffer('zebra, apple cherry, date')
+    it(
+      'should handle VM-004: mixed delimiters (comma priority over space)',
+      function()
+        setup_buffer('zebra, apple cherry, date')
 
-      set_operator_marks(1, 1, 1, 25)
+        set_operator_marks(1, 1, 1, 25)
 
-      operator.sort_operator('char')
+        operator.sort_operator('char')
 
-      local result = get_buffer_content()
-      assert.are.equal('apple cherry, date, zebra', result[1])
-    end)
+        local result = get_buffer_content()
+        assert.are.equal('apple cherry, date, zebra', result[1])
+      end
+    )
 
     it('should preserve leading whitespace of selection', function()
       setup_buffer('  zebra apple banana')
@@ -360,45 +478,54 @@ describe('operator functionality', function()
       assert.are.equal('apple banana cherry zebra', result[1])
     end)
 
-    it('NM-002: should handle around word text object without changes (goaw)', function()
-      setup_buffer('zebra apple banana cherry')
+    it(
+      'NM-002: should handle around word text object without changes (goaw)',
+      function()
+        setup_buffer('zebra apple banana cherry')
 
-      -- Simulate goaw on "banana" - positions 13-19 (1-based): "banana ".
-      -- This represents the around-word text object which includes trailing space.
-      set_operator_marks(1, 13, 1, 19)
+        -- Simulate goaw on "banana" - positions 13-19 (1-based): "banana ".
+        -- This represents the around-word text object which includes trailing space.
+        set_operator_marks(1, 13, 1, 19)
 
-      operator.sort_operator('char', false)
+        operator.sort_operator('char', false)
 
-      local result = get_buffer_content()
-      -- Should remain unchanged - single word with whitespace should not be "sorted".
-      assert.are.equal('zebra apple banana cherry', result[1])
-    end)
+        local result = get_buffer_content()
+        -- Should remain unchanged - single word with whitespace should not be "sorted".
+        assert.are.equal('zebra apple banana cherry', result[1])
+      end
+    )
 
-    it('should not treat single word with leading whitespace as sortable', function()
-      setup_buffer('prefix apple suffix')
+    it(
+      'should not treat single word with leading whitespace as sortable',
+      function()
+        setup_buffer('prefix apple suffix')
 
-      -- Simulate selecting " apple" (space + word).
-      set_operator_marks(1, 7, 1, 12)
+        -- Simulate selecting " apple" (space + word).
+        set_operator_marks(1, 7, 1, 12)
 
-      operator.sort_operator('char', false)
+        operator.sort_operator('char', false)
 
-      local result = get_buffer_content()
-      -- Should remain unchanged - leading space + single word is not sortable.
-      assert.are.equal('prefix apple suffix', result[1])
-    end)
+        local result = get_buffer_content()
+        -- Should remain unchanged - leading space + single word is not sortable.
+        assert.are.equal('prefix apple suffix', result[1])
+      end
+    )
 
-    it('should not treat single word with trailing whitespace as sortable', function()
-      setup_buffer('prefix apple suffix')
+    it(
+      'should not treat single word with trailing whitespace as sortable',
+      function()
+        setup_buffer('prefix apple suffix')
 
-      -- Simulate selecting "apple " (word + space).
-      set_operator_marks(1, 8, 1, 13)
+        -- Simulate selecting "apple " (word + space).
+        set_operator_marks(1, 8, 1, 13)
 
-      operator.sort_operator('char', false)
+        operator.sort_operator('char', false)
 
-      local result = get_buffer_content()
-      -- Should remain unchanged - single word + trailing space is not sortable.
-      assert.are.equal('prefix apple suffix', result[1])
-    end)
+        local result = get_buffer_content()
+        -- Should remain unchanged - single word + trailing space is not sortable.
+        assert.are.equal('prefix apple suffix', result[1])
+      end
+    )
 
     it('should handle inner word text object (goiw)', function()
       setup_buffer('zebra apple banana cherry')
@@ -413,17 +540,20 @@ describe('operator functionality', function()
       assert.are.equal('zebra apple banana cherry', result[1])
     end)
 
-    it('should properly sort when text object contains multiple sortable items', function()
-      setup_buffer('prefix zebra apple banana suffix')
+    it(
+      'should properly sort when text object contains multiple sortable items',
+      function()
+        setup_buffer('prefix zebra apple banana suffix')
 
-      -- Simulate text object that includes multiple words (e.g., go3w).
-      set_operator_marks(1, 8, 1, 25)
+        -- Simulate text object that includes multiple words (e.g., go3w).
+        set_operator_marks(1, 8, 1, 25)
 
-      operator.sort_operator('char', false)
+        operator.sort_operator('char', false)
 
-      local result = get_buffer_content()
-      -- Should sort the multi-word selection.
-      assert.are.equal('prefix apple banana zebra suffix', result[1])
-    end)
+        local result = get_buffer_content()
+        -- Should sort the multi-word selection.
+        assert.are.equal('prefix apple banana zebra suffix', result[1])
+      end
+    )
   end)
 end)

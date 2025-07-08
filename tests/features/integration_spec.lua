@@ -37,7 +37,7 @@ describe('integration functionality', function()
 
       -- Store original content.
       local original_content = get_buffer_content()
-      
+
       -- Perform sort operation.
       set_visual_marks(1, 1, 1, 18)
       operator.sort_operator('char', true)
@@ -112,7 +112,7 @@ describe('integration functionality', function()
 
       -- Verify transformation was correct.
       assert.are_not.equal(original_result[1], sorted_result[1])
-      
+
       -- Both contain same words, just different order.
       local original_words = vim.split(original_result[1], ' ')
       local sorted_words = vim.split(sorted_result[1], ' ')
@@ -125,17 +125,18 @@ describe('integration functionality', function()
     it('should work correctly on multiple lines', function()
       setup_buffer({
         'zebra apple banana',
-        'cherry date elderberry', 
+        'cherry date elderberry',
         'orange lemon grape',
-        'dog cat bird'
+        'dog cat bird',
       })
 
       -- Simulate effect of macro: sort each line individually.
       local lines_to_sort = { 1, 3, 4 } -- Skip line 2 as it's already sorted.
-      
+
       for _, line_num in ipairs(lines_to_sort) do
         vim.api.nvim_win_set_cursor(0, { line_num, 0 })
-        local line_content = vim.api.nvim_buf_get_lines(0, line_num - 1, line_num, false)[1]
+        local line_content =
+          vim.api.nvim_buf_get_lines(0, line_num - 1, line_num, false)[1]
         set_visual_marks(line_num, 1, line_num, #line_content)
         operator.sort_operator('char', true)
       end
@@ -150,7 +151,7 @@ describe('integration functionality', function()
     it('should handle mixed length operations', function()
       setup_buffer({
         'zebra apple',
-        'cherry date elderberry banana'
+        'cherry date elderberry banana',
       })
 
       -- Store original content.
@@ -174,7 +175,7 @@ describe('integration functionality', function()
     it('should handle sequential operations consistently', function()
       setup_buffer({
         'zebra apple banana',
-        'cherry date elderberry'
+        'cherry date elderberry',
       })
 
       -- Store original content.
@@ -183,7 +184,8 @@ describe('integration functionality', function()
       -- Simulate sequential operations.
       for line_num = 1, 2 do
         vim.api.nvim_win_set_cursor(0, { line_num, 0 })
-        local line_content = vim.api.nvim_buf_get_lines(0, line_num - 1, line_num, false)[1]
+        local line_content =
+          vim.api.nvim_buf_get_lines(0, line_num - 1, line_num, false)[1]
         set_visual_marks(line_num, 1, line_num, #line_content)
         operator.sort_operator('char', true)
       end

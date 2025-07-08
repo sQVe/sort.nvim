@@ -11,7 +11,6 @@ M.execute_builtin_sort = function(bang, arguments)
   vim.cmd("'<,'>sort" .. bang .. ' ' .. arguments)
 end
 
-
 --- Get text between two columns.
 --- @param selection Selection
 --- @return string text

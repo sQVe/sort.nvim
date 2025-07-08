@@ -53,7 +53,7 @@ describe('dot repeat functionality', function()
       -- Second operation: visual sort on line 2 using repeat.
       vim.api.nvim_win_set_cursor(0, { 2, 0 })
       set_visual_marks(2, 1, 2, 21)
-      
+
       -- Simulate dot repeat by calling the same operation.
       operator.sort_operator('char', true)
 
