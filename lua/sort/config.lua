@@ -3,6 +3,7 @@ local M = {}
 --- @type Config
 local defaults = {
   delimiters = { ',', '|', ';', ':', 's', 't' },
+  keymap = 'go',
   whitespace = {
     alignment_threshold = 3,
   },

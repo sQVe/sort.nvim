@@ -1,5 +1,6 @@
 --- @class Config
 --- @field public delimiters string[]
+--- @field public keymap string
 --- @field public mappings table
 
 --- @class SelectionFragment
