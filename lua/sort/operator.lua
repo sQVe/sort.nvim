@@ -282,6 +282,11 @@ M.sort_operator = function(motion_type, from_visual)
 
   -- Parse default options (can be extended later for operator arguments).
   local options = utils.parse_arguments('', '')
+  
+  -- Apply natural_sort configuration setting.
+  local config = require('sort.config')
+  local user_config = config.get_user_config()
+  options.natural = user_config.natural_sort
 
   local sorted_text
   local lines = vim.split(text, '\n')

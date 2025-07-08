@@ -4,6 +4,7 @@ local M = {}
 local defaults = {
   delimiters = { ',', '|', ';', ':', 's', 't' },
   keymap = 'go',
+  natural_sort = true,
   whitespace = {
     alignment_threshold = 3,
   },

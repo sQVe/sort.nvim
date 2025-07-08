@@ -14,6 +14,7 @@ describe('config', function()
       assert.are.same({
         delimiters = { ',', '|', ';', ':', 's', 't' },
         keymap = 'go',
+        natural_sort = true,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -39,6 +40,7 @@ describe('config', function()
       assert.are.same({
         delimiters = { ',', '|', ';', ':', 's', 't' },
         keymap = 'go',
+        natural_sort = true,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -63,6 +65,7 @@ describe('config', function()
       assert.are.same({
         delimiters = { ',', '|', ';', ':', 's', 't' },
         keymap = 'gS',
+        natural_sort = true,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -89,6 +92,7 @@ describe('config', function()
       assert.are.equal(',', user_config.delimiters[1])
       assert.are.equal('|', user_config.delimiters[2])
       assert.are.equal('go', user_config.keymap)
+      assert.are.equal(true, user_config.natural_sort)
     end)
 
     it('should handle nil overrides', function()
@@ -97,6 +101,7 @@ describe('config', function()
       assert.are.same({
         delimiters = { ',', '|', ';', ':', 's', 't' },
         keymap = 'go',
+        natural_sort = true,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -150,6 +155,27 @@ describe('config', function()
       -- With custom order, pipe should have higher priority than comma.
       -- So it should split by pipe first: ["a,b", "c,d"] -> ["a,b", "c,d"] (already sorted).
       assert.are.equal('a,b|c,d', result)
+    end)
+
+    it('should disable natural_sort when set to false', function()
+      local overrides = { natural_sort = false }
+      local user_config = config.setup(overrides)
+
+      assert.are.equal(false, user_config.natural_sort)
+      assert.are.equal('go', user_config.keymap) -- Other defaults should remain
+    end)
+
+    it('should enable natural_sort by default', function()
+      local user_config = config.setup({})
+
+      assert.are.equal(true, user_config.natural_sort)
+    end)
+
+    it('should override natural_sort to true when explicitly set', function()
+      local overrides = { natural_sort = true }
+      local user_config = config.setup(overrides)
+
+      assert.are.equal(true, user_config.natural_sort)
     end)
   end)
 end)

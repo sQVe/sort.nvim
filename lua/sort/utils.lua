@@ -68,8 +68,10 @@ M.parse_arguments = function(bang, arguments)
     options.numerical = 8
   elseif numerical == 'x' then
     options.numerical = 16
-  else
+  elseif numerical == 'n' then
     options.numerical = 10
+  else
+    options.numerical = false
   end
 
   options.ignore_case = string.match(arguments, 'i') ~= nil

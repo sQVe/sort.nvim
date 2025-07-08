@@ -217,6 +217,7 @@ describe('operator functionality', function()
 
   describe('alphabetical sorting over numerical', function()
     it('should sort lines alphabetically not numerically', function()
+      -- Keep natural sorting enabled but expect alphabetical sorting over numerical
       setup_buffer({
         'line 10',
         'line 2',
@@ -230,10 +231,10 @@ describe('operator functionality', function()
       operator.sort_operator('line', true)
 
       local result = get_buffer_content()
-      -- Should be alphabetical (1, 10, 2) not numerical (1, 2, 10)
+      -- Should be natural sorting (1, 2, 10) with natural sorting enabled
       assert.are.equal('line 1', result[1])
-      assert.are.equal('line 10', result[2])
-      assert.are.equal('line 2', result[3])
+      assert.are.equal('line 2', result[2])
+      assert.are.equal('line 10', result[3])
     end)
 
     it('should sort comment lines alphabetically', function()
@@ -555,5 +556,109 @@ describe('operator functionality', function()
         assert.are.equal('prefix apple banana zebra suffix', result[1])
       end
     )
+  end)
+
+  describe('natural sorting with motions', function()
+    before_each(function()
+      -- Clear module cache to ensure fresh config state.
+      package.loaded['sort.config'] = nil
+    end)
+
+    it('should use natural sorting by default for character motions', function()
+      setup_buffer('item10,item2,item1')
+
+      -- Simulate go$ - from position 1 to end of line.
+      set_operator_marks(1, 1, 1, 18)
+
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      -- Natural sorting should give item1,item2,item10 (not item1,item10,item2).
+      assert.are.equal('item1,item2,item10', result[1])
+    end)
+
+    it('should use natural sorting by default for line motions', function()
+      setup_buffer({
+        'file10.txt',
+        'file2.txt',
+        'file1.txt'
+      })
+
+      -- Simulate go2j - sort 3 lines.
+      set_operator_marks(1, 1, 3, 10)
+
+      operator.sort_operator('line')
+
+      local result = get_buffer_content()
+      -- Natural sorting should give file1.txt, file2.txt, file10.txt.
+      assert.are.same({
+        'file1.txt',
+        'file2.txt',
+        'file10.txt'
+      }, result)
+    end)
+
+    it('should respect natural_sort = false configuration', function()
+      -- Clear module cache to ensure fresh config state.
+      package.loaded['sort.config'] = nil
+      package.loaded['sort.operator'] = nil
+      
+      -- Set up config with natural_sort disabled.
+      local config = require('sort.config')
+      config.setup({ natural_sort = false })
+
+      -- Reload operator module to pick up new config.
+      local operator = require('sort.operator')
+
+      setup_buffer('item10,item2,item1')
+
+      -- Simulate go$ - from position 1 to end of line.
+      set_operator_marks(1, 1, 1, 18)
+
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      -- Lexicographic sorting should give item1,item10,item2.
+      assert.are.equal('item1,item10,item2', result[1])
+    end)
+
+    it('should use natural sorting with visual selections', function()
+      setup_buffer('version10,version2,version1')
+
+      -- Simulate visual selection.
+      set_visual_marks(1, 1, 1, 27)
+
+      operator.sort_operator('char', true) -- true for visual mode
+
+      local result = get_buffer_content()
+      -- Natural sorting should give version1,version2,version10.
+      assert.are.equal('version1,version2,version10', result[1])
+    end)
+
+    it('should handle natural sorting with mixed delimiters', function()
+      setup_buffer('step10|step2|step1')
+
+      -- Simulate operator motion.
+      set_operator_marks(1, 1, 1, 18)
+
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      -- Natural sorting should give step1|step2|step10.
+      assert.are.equal('step1|step2|step10', result[1])
+    end)
+
+    it('should handle natural sorting with space-delimited items', function()
+      setup_buffer('task10 task2 task1')
+
+      -- Simulate operator motion.
+      set_operator_marks(1, 1, 1, 18)
+
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      -- Natural sorting should give task1 task2 task10.
+      assert.are.equal('task1 task2 task10', result[1])
+    end)
   end)
 end)

@@ -44,6 +44,11 @@
     't'  -- Tab.
   },
 
+  -- Enable natural sorting for motion operations by default.
+  -- When true, sorts "item1,item10,item2" as "item1,item2,item10".
+  -- When false, uses lexicographic sorting: "item1,item10,item2".
+  natural_sort = true,
+
   -- Whitespace handling configuration.
   whitespace = {
     -- When whitespace before items is >= this many characters, it's considered
@@ -138,6 +143,30 @@ gop
 " Quick line sort.
 gogo
 ```
+
+### Natural sorting for motions
+
+By default, **Sort** uses natural sorting for motion operations, which handles numbers in strings more intuitively:
+
+```vim
+" With natural_sort = true (default):
+" 'item1,item10,item2' becomes 'item1,item2,item10'
+go$
+
+" With natural_sort = false:
+" 'item1,item10,item2' becomes 'item1,item10,item2' (lexicographic)
+go$
+```
+
+To disable natural sorting for motions:
+
+```lua
+require('sort').setup({
+  natural_sort = false,
+})
+```
+
+**Note**: The `:Sort z` command still works independently of this setting for explicit natural sorting.
 
 ### Customizing mappings
 

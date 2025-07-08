@@ -2,6 +2,7 @@
 --- @field public delimiters string[]
 --- @field public keymap string
 --- @field public mappings table
+--- @field public natural_sort boolean
 
 --- @class SelectionFragment
 --- @field public row integer

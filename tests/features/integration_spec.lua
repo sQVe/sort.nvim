@@ -23,6 +23,13 @@ describe('integration functionality', function()
     vim.api.nvim_buf_set_mark(0, '>', end_row, end_col - 1, {})
   end
 
+  -- Helper function to simulate operator marks.
+  local function set_operator_marks(start_row, start_col, end_row, end_col)
+    -- Set operator marks (1-based rows, 1-based cols for marks).
+    vim.api.nvim_buf_set_mark(0, '[', start_row, start_col - 1, {})
+    vim.api.nvim_buf_set_mark(0, ']', end_row, end_col - 1, {})
+  end
+
   before_each(function()
     -- Clear any existing marks.
     pcall(vim.api.nvim_buf_del_mark, 0, '[')
@@ -246,6 +253,114 @@ describe('integration functionality', function()
       vim.api.nvim_set_current_buf(second_buf)
       result = vim.api.nvim_buf_get_lines(0, 0, -1, false)
       assert.are.equal('cherry date elderberry', result[1])
+    end)
+  end)
+
+  describe('natural sorting integration', function()
+    before_each(function()
+      -- Clear module cache to ensure fresh config state.
+      package.loaded['sort.config'] = nil
+    end)
+
+    it('should use natural sorting for complete workflow', function()
+      -- Setup plugin with default config (natural_sort = true).
+      local sort = require('sort')
+      sort.setup()
+
+      setup_buffer('item10,item2,item1,item20')
+
+      -- Simulate go$ - operator motion from start to end.
+      set_operator_marks(1, 1, 1, 25)
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      -- Natural sorting should give item1,item2,item10,item20.
+      assert.are.equal('item1,item2,item10,item20', result[1])
+    end)
+
+    it('should respect config changes for natural sorting', function()
+      -- Clear module cache to ensure fresh config state.
+      package.loaded['sort.config'] = nil
+      package.loaded['sort.operator'] = nil
+      package.loaded['sort'] = nil
+      
+      -- Setup plugin with natural_sort disabled.
+      local sort = require('sort')
+      sort.setup({ natural_sort = false })
+
+      -- Reload operator module to pick up new config.
+      local operator = require('sort.operator')
+
+      setup_buffer('item10,item2,item1,item20')
+
+      -- Simulate go$ - operator motion from start to end.
+      set_operator_marks(1, 1, 1, 25)
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      -- Lexicographic sorting should give item1,item10,item2,item20.
+      assert.are.equal('item1,item10,item2,item20', result[1])
+    end)
+
+    it('should handle natural sorting with complex mixed content', function()
+      local sort = require('sort')
+      sort.setup()
+
+      setup_buffer('v1.10.0,v1.2.0,v1.1.0,v2.0.0')
+
+      -- Simulate operator motion.
+      set_operator_marks(1, 1, 1, 28)
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      -- Natural sorting should give v1.1.0,v1.2.0,v1.10.0,v2.0.0.
+      assert.are.equal('v1.1.0,v1.2.0,v1.10.0,v2.0.0', result[1])
+    end)
+
+    it('should persist natural sorting across different operations', function()
+      local sort = require('sort')
+      sort.setup()
+
+      -- Test with comma-separated items.
+      setup_buffer('item10,item2,item1')
+      set_operator_marks(1, 1, 1, 18)
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      assert.are.equal('item1,item2,item10', result[1])
+
+      -- Test with pipe-separated items in same session.
+      setup_buffer('task10|task2|task1')
+      set_operator_marks(1, 1, 1, 18)
+      operator.sort_operator('char')
+
+      result = get_buffer_content()
+      assert.are.equal('task1|task2|task10', result[1])
+    end)
+
+    it('should handle natural sorting with line-wise operations', function()
+      local sort = require('sort')
+      sort.setup()
+
+      setup_buffer({
+        'line10',
+        'line2',
+        'line1',
+        'line20'
+      })
+
+      -- Simulate line-wise motion.
+      set_operator_marks(1, 1, 4, 6)
+      operator.sort_operator('line')
+
+      local result = get_buffer_content()
+      -- Natural sorting should give line1, line2, line10, line20.
+      assert.are.same({
+        'line1',
+        'line2',
+        'line10',
+        'line20'
+      }, result)
     end)
   end)
 end)
