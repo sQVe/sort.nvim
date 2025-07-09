@@ -20,8 +20,15 @@ jobs:
           neovim: true
           version: stable
 
-      - name: Install LuaRocks
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.1"
+
+      - name: Setup LuaRocks
         uses: leafo/gh-actions-luarocks@v4
+        with:
+          luaRocksVersion: "3.11.0"
 
       - name: Install dependencies
         run: |
