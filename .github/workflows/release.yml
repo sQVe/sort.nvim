@@ -17,26 +17,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup date
+        shell: bash
+        run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      
+      - name: Restore Neovim cache
+        id: cache-neovim-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/nvim
+          key: neovim-cache-${{ env.DATE }}-stable
+      
       - name: Install Neovim
+        if: steps.cache-neovim-restore.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          mkdir -p ~/nvim
-          wget https://github.com/neovim/neovim/releases/download/v0.10.0/nvim-linux64.tar.gz -O nvim-linux64.tar.gz
-          tar -C ~/nvim -xzf nvim-linux64.tar.gz --strip-components=1
-          echo "$HOME/nvim/bin" >> $GITHUB_PATH
-
+          mkdir -p ${{ runner.temp }}/nvim
+          wget -q https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.appimage -O ${{ runner.temp }}/nvim/nvim.appimage
+          cd ${{ runner.temp }}/nvim
+          chmod a+x ./nvim.appimage
+          ./nvim.appimage --appimage-extract
+      
+      - name: Save Neovim cache
+        if: steps.cache-neovim-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/nvim
+          key: neovim-cache-${{ env.DATE }}-stable
+      
+      - name: Add Neovim to PATH
+        shell: bash
+        run: |
+          echo "${{ runner.temp }}/nvim/squashfs-root/usr/bin/" >> $GITHUB_PATH
+      
       - name: Neovim version
         run: nvim --version
-      
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lua5.1 liblua5.1-dev luarocks
-      
-      - name: Install Lua dependencies
-        run: |
-          sudo luarocks install luassert
-          sudo luarocks install busted
 
       - name: Test Cache
         uses: actions/cache@v4
