@@ -76,7 +76,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" &>/dev/null; then
+          set -x  # Enable debug output
+          which gh || echo "gh CLI not found!"
+          echo "Checking for release: ${{ github.ref_name }}"
+          if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
             echo "Release ${{ github.ref_name }} already exists"
           else
@@ -92,7 +95,14 @@ jobs:
           echo "Deleting existing release ${{ github.ref_name }}..."
           gh release delete "${{ github.ref_name }}" --repo "${{ github.repository }}" -y
 
-      - name: Create Release
+      - name: Create Archives
+        run: |
+          mkdir -p sort-nvim
+          cp -r lua plugin README.md LICENSE CHANGELOG.md sort-nvim/
+          tar -czf sort-nvim-${{ steps.tag_name.outputs.current_version }}.tar.gz sort-nvim
+          zip -r sort-nvim-${{ steps.tag_name.outputs.current_version }}.zip sort-nvim
+
+      - name: Create Release with Assets
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref }}
@@ -103,18 +113,5 @@ jobs:
           fail_on_unmatched_files: false
           files: |
             LICENSE
-
-      - name: Create Archives
-        run: |
-          mkdir -p sort-nvim
-          cp -r lua plugin README.md LICENSE CHANGELOG.md sort-nvim/
-          tar -czf sort-nvim-${{ steps.tag_name.outputs.current_version }}.tar.gz sort-nvim
-          zip -r sort-nvim-${{ steps.tag_name.outputs.current_version }}.zip sort-nvim
-
-      - name: Upload Archives to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref }}
-          files: |
             sort-nvim-${{ steps.tag_name.outputs.current_version }}.tar.gz
             sort-nvim-${{ steps.tag_name.outputs.current_version }}.zip
