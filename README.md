@@ -1,5 +1,8 @@
 # 🔠 sort.nvim
 
+[![GitHub release](https://img.shields.io/github/v/release/sQVe/sort.nvim?style=flat-square)](https://github.com/sQVe/sort.nvim/releases/latest)
+[![License](https://img.shields.io/github/license/sQVe/sort.nvim?style=flat-square)](https://github.com/sQVe/sort.nvim/blob/main/LICENSE)
+
 **Sort** is a sorting plugin for [Neovim](https://neovim.io) that provides intelligent sorting capabilities with support for both line-wise and delimiter-based sorting. This plugin automatically selects the most appropriate sorting strategy using a configurable priority system, making sorting efficient and intuitive.
 
 ## ❓ Why

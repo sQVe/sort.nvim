@@ -4,7 +4,12 @@ local sort = require('sort.sort')
 local utils = require('sort.utils')
 local mappings = require('sort.mappings')
 
-local M = {}
+local M = {
+  _VERSION = '2.0.0',
+  _DESCRIPTION = 'Sorting plugin for Neovim',
+  _URL = 'https://github.com/sQVe/sort.nvim',
+  _LICENSE = 'MIT',
+}
 
 M.setup = function(opts)
   config.setup(opts)
