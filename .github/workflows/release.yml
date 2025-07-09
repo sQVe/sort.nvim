@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   test:
@@ -66,27 +67,30 @@ jobs:
         id: changelog_reader
         uses: mindsers/changelog-reader-action@v2
         with:
-          validation: true
+          validation_level: error
           version: ${{ steps.tag_name.outputs.current_version }}
           path: ./CHANGELOG.md
       
       - name: Check if release exists
         id: check_release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          if gh release view ${{ github.ref_name }} &>/dev/null; then
+          if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" &>/dev/null; then
             echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release ${{ github.ref_name }} already exists"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release ${{ github.ref_name }} does not exist"
           fi
       
       - name: Delete existing release if exists
         if: steps.check_release.outputs.exists == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          gh release delete ${{ github.ref_name }} -y
+          echo "Deleting existing release ${{ github.ref_name }}..."
+          gh release delete "${{ github.ref_name }}" --repo "${{ github.repository }}" -y
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
