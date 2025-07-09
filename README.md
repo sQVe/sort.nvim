@@ -119,6 +119,8 @@ When selecting within a single line, the plugin performs delimiter-based sorting
 | `]o` | Normal/Visual/Operator | Jump to next delimiter |
 | `[o` | Normal/Visual/Operator | Jump to previous delimiter |
 
+All sorting operations support Vim's dot-repeat (`.`) functionality, allowing you to easily repeat the last sort operation.
+
 #### Examples
 
 ```vim
