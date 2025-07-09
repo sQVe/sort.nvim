@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+# Enable strict error handling
+set -euo pipefail
+
+# Colors for output
+readonly YELLOW='\033[1;33m'
+readonly RED='\033[0;31m'
+readonly NC='\033[0m' # No Color
+
+# Function to check if a command exists
+check_command() {
+  local cmd="$1"
+  if ! type -P "${cmd}" > /dev/null 2>&1; then
+    return 1
+  fi
+  return 0
+}
+
+# Find all shell scripts that are staged for commit
+mapfile -t staged_shell_files < <(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(sh|bash)$|^[^.]+$' | while read -r file; do
+  # Check if file exists and is a shell script
+  if [[ -f "${file}" ]] && file "${file}" 2> /dev/null | grep -q "shell script"; then
+    echo "${file}"
+  fi
+done || true)
+
+# Format shell scripts with shfmt if available
+if [[ ${#staged_shell_files[@]} -gt 0 ]]; then
+  if check_command shfmt; then
+    echo "Formatting shell scripts with shfmt..."
+    for file in "${staged_shell_files[@]}"; do
+      if [[ -f "${file}" ]]; then
+        if shfmt -i 2 -bn -ci -sr -w "${file}"; then
+          git add "${file}"
+        else
+          echo -e "${RED}Error: Failed to format ${file} with shfmt${NC}" >&2
+          exit 1
+        fi
+      fi
+    done
+  else
+    echo -e "${YELLOW}Warning: shfmt is not installed. Skipping shell script formatting.${NC}"
+    echo "Install shfmt with one of these methods:"
+    echo "  • go install mvdan.cc/sh/v3/cmd/shfmt@latest"
+    echo "  • brew install shfmt (macOS)"
+    echo "  • Download from: https://github.com/mvdan/sh/releases"
+  fi
+fi
+
+# Find all Lua files that are staged for commit
+mapfile -t staged_lua_files < <(git diff --cached --name-only --diff-filter=ACM | grep '\.lua$' || true)
+
+# Format Lua files with stylua if available
+if [[ ${#staged_lua_files[@]} -gt 0 ]]; then
+  if check_command stylua; then
+    echo "Formatting Lua files with stylua..."
+    for file in "${staged_lua_files[@]}"; do
+      if [[ -f "${file}" ]]; then
+        if stylua --search-parent-directories "${file}"; then
+          git add "${file}"
+        else
+          echo -e "${RED}Error: Failed to format ${file} with stylua${NC}" >&2
+          exit 1
+        fi
+      fi
+    done
+  else
+    echo -e "${YELLOW}Warning: stylua is not installed. Skipping Lua formatting.${NC}"
+    echo "Install stylua with: cargo install stylua"
+  fi
+fi
+
+exit 0

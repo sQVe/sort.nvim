@@ -231,9 +231,48 @@ All contributions are welcome! Whether it's bug reports, feature requests, or pu
 
 Before contributing:
 - Follow the existing code style and formatting conventions
-- Install [stylua](https://github.com/johnnymorganz/stylua) for consistent formatting
+- Install the formatters ([stylua](https://github.com/johnnymorganz/stylua) and [shfmt](https://github.com/mvdan/sh)) for consistent formatting
 - Write clear commit messages describing your changes
 - Add tests for new functionality when applicable
+- Run tests before submitting pull requests
+
+### Development Setup
+
+This project uses git hooks to ensure code quality and consistent formatting. To install the pre-commit hook:
+
+```bash
+./scripts/install-hooks
+```
+
+The pre-commit hook will automatically format:
+- **Lua files** using [stylua](https://github.com/JohnnyMorganz/StyLua)
+- **Shell scripts** using [shfmt](https://github.com/mvdan/sh)
+
+#### Installing formatters
+
+**stylua** (for Lua files):
+- `cargo install stylua` (recommended)
+- `brew install stylua` (macOS)
+- Download from [stylua releases](https://github.com/JohnnyMorganz/StyLua/releases)
+
+**shfmt** (for shell scripts):
+- `go install mvdan.cc/sh/v3/cmd/shfmt@latest` (recommended)
+- `brew install shfmt` (macOS)
+- Download from [shfmt releases](https://github.com/mvdan/sh/releases)
+
+#### Running tests
+
+To run the test suite:
+
+```bash
+./scripts/test
+```
+
+Use the `-v` or `--verbose` flag for detailed output:
+
+```bash
+./scripts/test --verbose
+```
 
 ## 🏁 Roadmap
 

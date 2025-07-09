@@ -1,3 +1,71 @@
-#!/bin/env bash
+#!/usr/bin/env bash
+
+# Enable strict error handling
+set -euo pipefail
+
+# Script description
+readonly SCRIPT_NAME="${0##*/}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+readonly PROJECT_ROOT
+
+# Function to display usage
+usage() {
+  cat << EOF
+Usage: ${SCRIPT_NAME} [OPTIONS]
+
+Run tests for sort.nvim plugin using minimal Neovim configuration.
+
+Options:
+  -h, --help    Display this help message
+  -v, --verbose Enable verbose output
+
+Example:
+  ${SCRIPT_NAME}
+  ${SCRIPT_NAME} --verbose
+EOF
+}
+
+# Parse command line arguments
+VERBOSE=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -v | --verbose)
+      VERBOSE=true
+      shift
+      ;;
+    *)
+      echo "Error: Unknown option: $1" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+# Change to project root
+cd "${PROJECT_ROOT}"
+
+# Check if Neovim is available
+if ! type -P nvim > /dev/null 2>&1; then
+  echo "Error: Neovim is not installed or not in PATH" >&2
+  exit 1
+fi
+
+# Check if test file exists
+if [[ ! -f "tests/minit.lua" ]]; then
+  echo "Error: Test file 'tests/minit.lua' not found" >&2
+  exit 1
+fi
+
+# Run tests
+if [[ "${VERBOSE}" == "true" ]]; then
+  echo "Running tests from: ${PROJECT_ROOT}"
+  echo "Using test file: tests/minit.lua"
+fi
 
 nvim -l tests/minit.lua --minitest
