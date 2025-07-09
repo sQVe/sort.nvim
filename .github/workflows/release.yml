@@ -10,30 +10,30 @@ permissions:
 
 jobs:
   test:
+    name: Run Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Neovim
-        uses: rhysd/action-setup-vim@v1
-        with:
-          neovim: true
-          version: stable
-
-      - name: Setup Lua
-        uses: leafo/gh-actions-lua@v10
-        with:
-          luaVersion: "5.1"
-
-      - name: Setup LuaRocks
-        uses: leafo/gh-actions-luarocks@v4
-        with:
-          luaRocksVersion: "3.11.0"
-
-      - name: Install dependencies
+        shell: bash
         run: |
-          luarocks install busted
-          luarocks install luacov
+          mkdir -p ~/nvim
+          wget -q https://github.com/neovim/neovim/releases/download/stable/nvim.appimage -O ~/nvim/nvim.appimage
+          cd ~/nvim
+          chmod a+x ./nvim.appimage
+          ./nvim.appimage --appimage-extract
+          echo "$HOME/nvim/squashfs-root/usr/bin/" >> $GITHUB_PATH
+
+      - name: Neovim version
+        run: nvim --version
+
+      - name: Test Cache
+        uses: actions/cache@v4
+        with:
+          path: .tests
+          key: ${{ runner.os }}-tests-${{ hashFiles('tests/minit.lua', 'scripts/test') }}
 
       - name: Run tests
         run: |
@@ -41,6 +41,7 @@ jobs:
           ./scripts/test
 
   release:
+    name: Create Release
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -62,40 +63,27 @@ jobs:
           path: ./CHANGELOG.md
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          name: Release v${{ steps.tag_name.outputs.current_version }}
           body: ${{ steps.changelog_reader.outputs.changes }}
-          prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
           draft: ${{ steps.changelog_reader.outputs.status == 'unreleased' }}
+          prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
+          files: |
+            LICENSE
 
-      - name: Create Archive
+      - name: Create Archives
         run: |
           mkdir -p sort-nvim
           cp -r lua plugin README.md LICENSE CHANGELOG.md sort-nvim/
           tar -czf sort-nvim-${{ steps.tag_name.outputs.current_version }}.tar.gz sort-nvim
           zip -r sort-nvim-${{ steps.tag_name.outputs.current_version }}.zip sort-nvim
 
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Archives to Release
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./sort-nvim-${{ steps.tag_name.outputs.current_version }}.tar.gz
-          asset_name: sort-nvim-${{ steps.tag_name.outputs.current_version }}.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Upload Release Assets (ZIP)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./sort-nvim-${{ steps.tag_name.outputs.current_version }}.zip
-          asset_name: sort-nvim-${{ steps.tag_name.outputs.current_version }}.zip
-          asset_content_type: application/zip
+          tag_name: ${{ github.ref }}
+          files: |
+            sort-nvim-${{ steps.tag_name.outputs.current_version }}.tar.gz
+            sort-nvim-${{ steps.tag_name.outputs.current_version }}.zip
