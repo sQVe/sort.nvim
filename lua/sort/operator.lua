@@ -57,7 +57,18 @@ local function get_text_for_motion(
       local line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1] or ''
       local start_col = math.min(start_pos[2], end_pos[2])
       local end_col = math.max(start_pos[2], end_pos[2])
-      table.insert(lines, string.sub(line, start_col, end_col))
+      local line_len = string.len(line)
+      
+      if is_visual_marks then
+        -- Visual marks are 0-based, string.sub is 1-based, so add 1.
+        -- Also add 1 to end_col to make selection inclusive, but clamp to line length.
+        local end_col_clamped = math.min(end_col + 1, line_len)
+        table.insert(lines, string.sub(line, start_col + 1, end_col_clamped))
+      else
+        -- Operator marks are 0-based, convert to 1-based for string.sub.
+        local end_col_clamped = math.min(end_col + 1, line_len)
+        table.insert(lines, string.sub(line, start_col + 1, end_col_clamped))
+      end
     end
     return table.concat(lines, '\n')
   end
@@ -185,8 +196,22 @@ local function set_text_for_motion(
     local end_col = math.max(start_pos[2], end_pos[2])
 
     for i, line in ipairs(lines) do
-      local row = start_pos[1] + i - 2
-      vim.api.nvim_buf_set_text(0, row, start_col - 1, row, end_col, { line })
+      local row = start_pos[1] + i - 1
+      
+      -- Get the current line to check bounds
+      local current_line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1] or ''
+      local line_len = string.len(current_line)
+      
+      if is_visual_marks then
+        -- Visual marks are 0-based, nvim_buf_set_text expects 0-based.
+        -- Add 1 to end_col to make selection inclusive, but clamp to line length.
+        local end_col_clamped = math.min(end_col + 1, line_len)
+        vim.api.nvim_buf_set_text(0, row - 1, start_col, row - 1, end_col_clamped, { line })
+      else
+        -- Operator marks are 0-based, nvim_buf_set_text expects 0-based.
+        local end_col_clamped = math.min(end_col + 1, line_len)
+        vim.api.nvim_buf_set_text(0, row - 1, start_col, row - 1, end_col_clamped, { line })
+      end
     end
   end
 end
@@ -304,6 +329,13 @@ M.sort_operator = function(motion_type, from_visual)
       })
       sorted_text = sort.line_sort_text(text, line_options)
     end
+  elseif effective_motion_type == 'block' then
+    -- For block-wise motions, treat each extracted text piece as a separate line
+    -- For line sorting, disable numerical sorting to get alphabetical sorting.
+    local block_options = vim.tbl_deep_extend('force', options, {
+      numerical = false,
+    })
+    sorted_text = sort.line_sort_text(text, block_options)
   else
     sorted_text = sort_text_with_trailing_delimiter(text, options)
   end

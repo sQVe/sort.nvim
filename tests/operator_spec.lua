@@ -661,4 +661,68 @@ describe('operator functionality', function()
       assert.are.equal('task1 task2 task10', result[1])
     end)
   end)
+
+  describe('visual block sorting', function()
+    it('should sort text within visual block selection', function()
+      setup_buffer({
+        '1. Aaaa',
+        '2. Cccc',
+        '4. Gggg',
+        '3. Dddd',
+      })
+
+      -- Simulate visual block selection of just the text part (columns 4-7)
+      -- This selects "Aaaa", "Cccc", "Gggg", "Dddd"
+      set_visual_marks(1, 4, 4, 7)
+
+      operator.sort_operator('block', true)
+
+      local result = get_buffer_content()
+      -- Text should be sorted alphabetically within the block
+      assert.are.equal('1. Aaaa', result[1])
+      assert.are.equal('2. Cccc', result[2])
+      assert.are.equal('4. Dddd', result[3])
+      assert.are.equal('3. Gggg', result[4])
+    end)
+
+    it('should handle visual block with varying line lengths', function()
+      setup_buffer({
+        'foo: apple',
+        'bar: cherry',
+        'baz: banana',
+        'qux: date',
+      })
+
+      -- Select the fruit names (columns 6-11)
+      set_visual_marks(1, 6, 4, 11)
+
+      operator.sort_operator('block', true)
+
+      local result = get_buffer_content()
+      -- Fruits should be sorted within the block
+      assert.are.equal('foo: apple', result[1])
+      assert.are.equal('bar: banana', result[2])
+      assert.are.equal('baz: cherry', result[3])
+      assert.are.equal('qux: date', result[4])
+    end)
+
+    it('should preserve text outside visual block selection', function()
+      setup_buffer({
+        'prefix zebra suffix',
+        'prefix apple suffix',
+        'prefix mango suffix',
+      })
+
+      -- Select just the middle words (columns 8-12)
+      set_visual_marks(1, 8, 3, 12)
+
+      operator.sort_operator('block', true)
+
+      local result = get_buffer_content()
+      -- Middle words should be sorted, prefix/suffix preserved
+      assert.are.equal('prefix apple suffix', result[1])
+      assert.are.equal('prefix mango suffix', result[2])
+      assert.are.equal('prefix zebra suffix', result[3])
+    end)
+  end)
 end)
