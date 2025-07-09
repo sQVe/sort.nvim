@@ -26,17 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed number types from number to integer for better type safety.
 - Removed Node.js dependencies in favor of Lua-based tooling.
 - Updated stylua configuration.
+- Added motion mapping task to roadmap.
+- Updated README with enhanced documentation and explanations.
+- Added dot-repeat support documentation.
+- Improved README readability.
 
 ### Fixed
 - Visual line selection sorting issues.
 - Column boundary handling when setting text (retry if col end out of bounds).
 - Restored functions required by tests.
-
-### Documentation
-- Added motion mapping task to roadmap.
-- Updated README with enhanced documentation and explanations.
-- Added dot-repeat support documentation.
-- Improved README readability.
 
 ## [1.0.0] - 2021-12-14
 
@@ -54,13 +52,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Override capability for existing Vim sort command.
 - Support for whitespace handling and normalization.
 - Numerical sorting support with proper parsing.
-
-### Development
-- Added stylua for code formatting.
-- Added .editorconfig for consistent coding standards.
-- Added prettier for markdown formatting.
-
-### Documentation
+- Stylua for code formatting.
+- .editorconfig for consistent coding standards.
+- Prettier for markdown formatting.
 - Initial README with installation and usage instructions.
 - Roadmap items for future development.
 - Keybinding examples with detailed explanations.
