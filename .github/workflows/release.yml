@@ -20,11 +20,9 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/nvim
-          wget -q https://github.com/neovim/neovim/releases/download/stable/nvim.appimage -O ~/nvim/nvim.appimage
-          cd ~/nvim
-          chmod a+x ./nvim.appimage
-          ./nvim.appimage --appimage-extract
-          echo "$HOME/nvim/squashfs-root/usr/bin/" >> $GITHUB_PATH
+          wget -q https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.tar.gz
+          tar -C ~/nvim -xzf nvim-linux64.tar.gz --strip-components=1
+          echo "$HOME/nvim/bin" >> $GITHUB_PATH
 
       - name: Neovim version
         run: nvim --version
