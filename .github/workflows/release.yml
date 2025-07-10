@@ -52,6 +52,16 @@ jobs:
       
       - name: Neovim version
         run: nvim --version
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1 liblua5.1-dev luarocks
+      
+      - name: Install Lua dependencies
+        run: |
+          sudo luarocks install luassert
+          sudo luarocks install busted
 
       - name: Test Cache
         uses: actions/cache@v4

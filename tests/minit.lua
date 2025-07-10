@@ -31,8 +31,4 @@ require('lazy.minit').setup({
   spec = {
     { dir = vim.uv.cwd() },
   },
-  rocks = {
-    enabled = true,
-    hererocks = true,
-  },
 })
