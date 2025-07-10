@@ -581,7 +581,7 @@ describe('operator functionality', function()
       setup_buffer({
         'file10.txt',
         'file2.txt',
-        'file1.txt'
+        'file1.txt',
       })
 
       -- Simulate go2j - sort 3 lines.
@@ -594,7 +594,7 @@ describe('operator functionality', function()
       assert.are.same({
         'file1.txt',
         'file2.txt',
-        'file10.txt'
+        'file10.txt',
       }, result)
     end)
 
@@ -602,7 +602,7 @@ describe('operator functionality', function()
       -- Clear module cache to ensure fresh config state.
       package.loaded['sort.config'] = nil
       package.loaded['sort.operator'] = nil
-      
+
       -- Set up config with natural_sort disabled.
       local config = require('sort.config')
       config.setup({ natural_sort = false })
@@ -660,6 +660,127 @@ describe('operator functionality', function()
       -- Natural sorting should give task1 task2 task10.
       assert.are.equal('task1 task2 task10', result[1])
     end)
+  end)
+
+  describe('multi-line list sorting inside braces', function()
+    it(
+      'should correctly sort multi-line comma-separated list inside braces',
+      function()
+        setup_buffer({
+          'names = {',
+          "  'Charlie',",
+          "  'Angel',",
+          "  'Chris',",
+          "  'Bro',",
+          '}',
+        })
+
+        -- Simulate gi{ motion - selecting content inside braces
+        -- When { is at the end of a line, i{ selects from the next line
+        set_operator_marks(2, 1, 5, 11) -- From start of line 2 to end of last comma
+
+        operator.sort_operator('char')
+
+        local result = get_buffer_content()
+        -- Expected: sorted lines with proper formatting preserved
+        assert.are.equal('names = {', result[1])
+        assert.are.equal("  'Angel',", result[2])
+        assert.are.equal("  'Bro',", result[3])
+        assert.are.equal("  'Charlie',", result[4])
+        assert.are.equal("  'Chris',", result[5])
+        assert.are.equal('}', result[6])
+      end
+    )
+
+    it(
+      'should handle multi-line list with different indentation levels',
+      function()
+        setup_buffer({
+          'const items = {',
+          "    'zebra',",
+          "    'apple',",
+          "    'mango',",
+          "    'banana',",
+          '};',
+        })
+
+        -- Simulate gi{ motion
+        set_operator_marks(2, 1, 5, 13) -- From start of line 2 to end of last comma
+
+        operator.sort_operator('char')
+
+        local result = get_buffer_content()
+        assert.are.equal('const items = {', result[1])
+        assert.are.equal("    'apple',", result[2])
+        assert.are.equal("    'banana',", result[3])
+        assert.are.equal("    'mango',", result[4])
+        assert.are.equal("    'zebra',", result[5])
+        assert.are.equal('};', result[6])
+      end
+    )
+
+    it('should handle multi-line list without trailing commas', function()
+      setup_buffer({
+        'list = {',
+        "  'item3'",
+        "  'item1'",
+        "  'item2'",
+        '}',
+      })
+
+      -- Simulate gi{ motion
+      set_operator_marks(2, 1, 4, 10) -- From start of line 2 to end of line 4
+
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      assert.are.equal('list = {', result[1])
+      assert.are.equal("  'item1'", result[2])
+      assert.are.equal("  'item2'", result[3])
+      assert.are.equal("  'item3'", result[4])
+      assert.are.equal('}', result[5])
+    end)
+  end)
+
+  describe('partial line character motions', function()
+    it('should use delimiter sorting for partial line selections', function()
+      setup_buffer({
+        'prefix [zebra, apple, banana] suffix',
+        'another line',
+      })
+
+      -- Select just the content inside brackets (partial line)
+      set_operator_marks(1, 9, 1, 28) -- From after [ to before ]
+
+      operator.sort_operator('char')
+
+      local result = get_buffer_content()
+      assert.are.equal('prefix [apple, banana, zebra] suffix', result[1])
+      assert.are.equal('another line', result[2])
+    end)
+
+    it(
+      'should not treat partial multi-line selections as line motions',
+      function()
+        setup_buffer({
+          'line1 start zebra',
+          'apple banana',
+          'cherry end line3',
+        })
+
+        -- Select from middle of line 1 to middle of line 3
+        set_operator_marks(1, 13, 3, 6) -- From "zebra" to "cherry"
+
+        operator.sort_operator('char')
+
+        local result = get_buffer_content()
+        -- The partial selection "zebra\napple banana\ncherry" gets sorted by delimiter
+        -- This results in the text being rearranged across lines
+        assert.are.equal('line1 start banana', result[1])
+        assert.are.equal('cherry zebra', result[2])
+        assert.are.equal('apple end line3', result[3])
+      end
+    )
   end)
 
   describe('visual block sorting', function()

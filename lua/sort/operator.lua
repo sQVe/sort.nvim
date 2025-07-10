@@ -58,7 +58,7 @@ local function get_text_for_motion(
       local start_col = math.min(start_pos[2], end_pos[2])
       local end_col = math.max(start_pos[2], end_pos[2])
       local line_len = string.len(line)
-      
+
       if is_visual_marks then
         -- Visual marks are 0-based, string.sub is 1-based, so add 1.
         -- Also add 1 to end_col to make selection inclusive, but clamp to line length.
@@ -197,20 +197,35 @@ local function set_text_for_motion(
 
     for i, line in ipairs(lines) do
       local row = start_pos[1] + i - 1
-      
+
       -- Get the current line to check bounds
-      local current_line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1] or ''
+      local current_line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1]
+        or ''
       local line_len = string.len(current_line)
-      
+
       if is_visual_marks then
         -- Visual marks are 0-based, nvim_buf_set_text expects 0-based.
         -- Add 1 to end_col to make selection inclusive, but clamp to line length.
         local end_col_clamped = math.min(end_col + 1, line_len)
-        vim.api.nvim_buf_set_text(0, row - 1, start_col, row - 1, end_col_clamped, { line })
+        vim.api.nvim_buf_set_text(
+          0,
+          row - 1,
+          start_col,
+          row - 1,
+          end_col_clamped,
+          { line }
+        )
       else
         -- Operator marks are 0-based, nvim_buf_set_text expects 0-based.
         local end_col_clamped = math.min(end_col + 1, line_len)
-        vim.api.nvim_buf_set_text(0, row - 1, start_col, row - 1, end_col_clamped, { line })
+        vim.api.nvim_buf_set_text(
+          0,
+          row - 1,
+          start_col,
+          row - 1,
+          end_col_clamped,
+          { line }
+        )
       end
     end
   end
@@ -293,6 +308,32 @@ M.sort_operator = function(motion_type, from_visual)
     effective_motion_type = 'char'
   end
 
+  -- Check if character motion covers "perfect lines" and convert to line motion
+  if effective_motion_type == 'char' and start_pos[1] < end_pos[1] then
+    -- Multi-line character motion - check if it covers complete lines
+    local first_line =
+      vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, start_pos[1], false)[1]
+    local last_line =
+      vim.api.nvim_buf_get_lines(0, end_pos[1] - 1, end_pos[1], false)[1]
+
+    if first_line and last_line then
+      -- Check if selection starts at beginning of first line
+      local starts_at_line_beginning = start_pos[2] == 0
+        or (
+          start_pos[2] > 0
+          and string.match(string.sub(first_line, 1, start_pos[2]), '^%s*$')
+        )
+
+      -- Check if selection ends at or near end of last line
+      local ends_at_line_end = end_pos[2] >= string.len(last_line) - 1
+
+      if starts_at_line_beginning and ends_at_line_end then
+        -- This is a "perfect lines" selection - convert to line motion
+        effective_motion_type = 'line'
+      end
+    end
+  end
+
   -- Get the text covered by the motion.
   local text = get_text_for_motion(
     effective_motion_type,
@@ -307,7 +348,7 @@ M.sort_operator = function(motion_type, from_visual)
 
   -- Parse default options (can be extended later for operator arguments).
   local options = utils.parse_arguments('', '')
-  
+
   -- Apply natural_sort configuration setting.
   local config = require('sort.config')
   local user_config = config.get_user_config()
@@ -337,6 +378,10 @@ M.sort_operator = function(motion_type, from_visual)
     })
     sorted_text = sort.line_sort_text(text, block_options)
   else
+    -- Character motion
+    -- Note: multi-line character motions that cover "perfect lines" have already been
+    -- converted to line motions above, so any multi-line character motion here is
+    -- a partial line selection that should use delimiter sorting
     sorted_text = sort_text_with_trailing_delimiter(text, options)
   end
 

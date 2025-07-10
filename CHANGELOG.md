@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Multi-line character motions with text objects (e.g., `goi{`) now preserve whitespace correctly by treating "perfect lines" selections as line motions (#10).
+
 ## [2.0.0] - 2025-07-09
 
 ### Added
