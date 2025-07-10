@@ -20,7 +20,7 @@ local function find_sortable_region(include_delimiters)
   local user_config = config.get_user_config()
   local delimiters = user_config.delimiters
 
-  -- Find the best delimiter for this line
+  -- Find the best delimiter for this line.
   local best_delimiter = nil
   local matches = nil
 
@@ -40,7 +40,7 @@ local function find_sortable_region(include_delimiters)
     return nil
   end
 
-  -- Find which segment the cursor is in
+  -- Find which segment the cursor is in.
   local current_pos = 1
   local segment_start = 1
   local segment_end = 1
@@ -58,12 +58,12 @@ local function find_sortable_region(include_delimiters)
     current_pos = current_pos + string.len(match) + string.len(best_delimiter)
   end
 
-  -- Determine selection boundaries
+  -- Determine selection boundaries.
   local selection_start = segment_start
   local selection_end = segment_end
 
   if include_delimiters then
-    -- Include surrounding delimiters
+    -- Include surrounding delimiters.
     if segment_index > 1 then
       selection_start = selection_start - string.len(best_delimiter)
     end
@@ -83,7 +83,7 @@ M.select_inner = function()
   local selection = find_sortable_region(false)
 
   if not selection then
-    -- Just beep and do nothing
+    -- Just beep and do nothing.
     vim.api.nvim_feedkeys(
       vim.api.nvim_replace_termcodes('<Nop>', true, false, true),
       'n',
@@ -92,7 +92,7 @@ M.select_inner = function()
     return
   end
 
-  -- Set the selection marks and enter visual mode
+  -- Set the selection marks and enter visual mode.
   local start_pos = { selection.from.row, selection.from.column - 1 }
   local end_pos = { selection.to.row, selection.to.column - 1 }
 
@@ -106,7 +106,7 @@ M.select_around = function()
   local selection = find_sortable_region(true)
 
   if not selection then
-    -- Just beep and do nothing
+    -- Just beep and do nothing.
     vim.api.nvim_feedkeys(
       vim.api.nvim_replace_termcodes('<Nop>', true, false, true),
       'n',
@@ -115,7 +115,7 @@ M.select_around = function()
     return
   end
 
-  -- Set the selection marks and enter visual mode
+  -- Set the selection marks and enter visual mode.
   local start_pos = { selection.from.row, selection.from.column - 1 }
   local end_pos = { selection.to.row, selection.to.column - 1 }
 

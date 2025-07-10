@@ -15,7 +15,7 @@ M.setup = function(opts)
   config.setup(opts)
   mappings.setup()
 
-  -- Set up repeat functionality
+  -- Set up repeat functionality.
   local repeat_mod = require('sort.repeat')
   repeat_mod.setup()
 end

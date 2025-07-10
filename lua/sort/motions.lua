@@ -14,20 +14,20 @@ local function find_next_delimiter(forward)
   local user_config = config.get_user_config()
   local delimiters = user_config.delimiters
 
-  -- Get current line
+  -- Get current line.
   local line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1] or ''
 
   if line == '' then
     return nil
   end
 
-  -- Find delimiters in the current line
+  -- Find delimiters in the current line.
   for _, delimiter in ipairs(delimiters) do
     local translated_delimiter = utils.translate_delimiter(delimiter)
     local matches = utils.split_by_delimiter(line, translated_delimiter)
 
     if #matches > 1 then
-      -- Find delimiter positions
+      -- Find delimiter positions.
       local positions = {}
       local current_pos = 1
 
@@ -37,7 +37,7 @@ local function find_next_delimiter(forward)
         current_pos = current_pos + string.len(translated_delimiter)
       end
 
-      -- Find the next position based on direction
+      -- Find the next position based on direction.
       if forward then
         for _, pos in ipairs(positions) do
           if pos > col then
@@ -53,7 +53,7 @@ local function find_next_delimiter(forward)
         end
       end
 
-      -- If we found any delimiters, we can stop searching
+      -- If we found any delimiters, we can stop searching.
       if #positions > 0 then
         break
       end
@@ -72,7 +72,7 @@ M.next_delimiter = function()
     return '' -- No movement
   end
 
-  -- Move to the delimiter position
+  -- Move to the delimiter position.
   return string.format('%dG%d|', pos[1], pos[2])
 end
 
@@ -85,7 +85,7 @@ M.prev_delimiter = function()
     return '' -- No movement
   end
 
-  -- Move to the delimiter position
+  -- Move to the delimiter position.
   return string.format('%dG%d|', pos[1], pos[2])
 end
 

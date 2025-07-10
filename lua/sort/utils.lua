@@ -211,8 +211,8 @@ M.parse_natural_segments = function(str)
     local current_char = str:sub(i, i)
     local is_digit = string.match(current_char, '%d') ~= nil
 
-    -- Collect all characters of the same type (digit or non-digit)
-    -- Don't treat minus as special - just group by digit vs non-digit
+    -- Collect all characters of the same type (digit or non-digit).
+    -- Don't treat minus as special - just group by digit vs non-digit.
     while i <= #str do
       local char = str:sub(i, i)
       local char_is_digit = string.match(char, '%d') ~= nil
@@ -239,7 +239,7 @@ end
 --- @return number -1 if a < b, 0 if a == b, 1 if a > b
 M.compare_natural_segments = function(seg_a, seg_b, ignore_case)
   if seg_a.is_number and seg_b.is_number then
-    -- Both are numbers - compare numerically
+    -- Both are numbers - compare numerically.
     local num_a = tonumber(seg_a.text)
     local num_b = tonumber(seg_b.text)
     if num_a < num_b then
@@ -250,21 +250,21 @@ M.compare_natural_segments = function(seg_a, seg_b, ignore_case)
       return 0
     end
   else
-    -- At least one is text - compare as strings
+    -- At least one is text - compare as strings.
     local text_a = ignore_case and string.lower(seg_a.text) or seg_a.text
     local text_b = ignore_case and string.lower(seg_b.text) or seg_b.text
 
     -- Special case: if both text segments end with minus and are followed by number segments,
-    -- treat this as negative number comparison
+    -- treat this as negative number comparison.
     if
       not seg_a.is_number
       and not seg_b.is_number
       and string.sub(text_a, -1) == '-'
       and string.sub(text_b, -1) == '-'
     then
-      -- This suggests they might be negative number prefixes
+      -- This suggests they might be negative number prefixes.
       -- We'll let the normal string comparison handle this, but the caller
-      -- should be aware this might need special handling
+      -- should be aware this might need special handling.
     end
 
     if text_a < text_b then
@@ -283,9 +283,9 @@ end
 --- @param ignore_case boolean Whether to ignore case
 --- @return boolean True if a should come before b
 M.natural_compare = function(a, b, ignore_case)
-  -- Special case: detect negative number pattern
+  -- Special case: detect negative number pattern.
   -- If both strings have the pattern "prefix-number" where prefix is the same,
-  -- treat the numbers as negative for comparison
+  -- treat the numbers as negative for comparison.
   local prefix_a, num_a = string.match(a, '^(.-)%-(%d+)$')
   local prefix_b, num_b = string.match(b, '^(.-)%-(%d+)$')
 
@@ -293,15 +293,15 @@ M.natural_compare = function(a, b, ignore_case)
     local cmp_prefix_a = ignore_case and string.lower(prefix_a) or prefix_a
     local cmp_prefix_b = ignore_case and string.lower(prefix_b) or prefix_b
     if cmp_prefix_a == cmp_prefix_b then
-      -- Both have the same prefix followed by minus and number
-      -- Compare as negative numbers
+      -- Both have the same prefix followed by minus and number.
+      -- Compare as negative numbers.
       local neg_a = -tonumber(num_a)
       local neg_b = -tonumber(num_b)
       return neg_a < neg_b
     end
   end
 
-  -- Standard natural sorting
+  -- Standard natural sorting.
   local segments_a = M.parse_natural_segments(a)
   local segments_b = M.parse_natural_segments(b)
 
@@ -311,7 +311,7 @@ M.natural_compare = function(a, b, ignore_case)
     local seg_a = segments_a[i]
     local seg_b = segments_b[i]
 
-    -- Handle case where one string is shorter
+    -- Handle case where one string is shorter.
     if not seg_a then
       return true -- a is shorter, should come first
     end
@@ -319,15 +319,15 @@ M.natural_compare = function(a, b, ignore_case)
       return false -- b is shorter, should come first
     end
 
-    -- Compare segments
+    -- Compare segments.
     local result = M.compare_natural_segments(seg_a, seg_b, ignore_case)
     if result ~= 0 then
       return result < 0
     end
   end
 
-  -- If all segments are equal, use case-sensitive lexicographic comparison as tiebreaker
-  -- This ensures consistent ordering even in case-insensitive mode
+  -- If all segments are equal, use case-sensitive lexicographic comparison as tiebreaker.
+  -- This ensures consistent ordering even in case-insensitive mode.
   return a < b
 end
 

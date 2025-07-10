@@ -6,6 +6,7 @@ sort.nvim-specific development guidelines for the Neovim sorting plugin.
 
 ### Development workflow
 - **Always run validation**: Run tests with `./scripts/test` after ALL code changes.
+- **Double-check before committing**: Review all changes, verify tests pass, ensure code follows guidelines.
 - **Use TodoWrite tool**: Plan complex tasks and track progress systematically.
 - **Understand first**: Analyze codebase structure before making changes.
 - **Verify implementation**: Test functionality after changes, follow existing patterns.

@@ -283,7 +283,7 @@ describe('integration functionality', function()
       package.loaded['sort.config'] = nil
       package.loaded['sort.operator'] = nil
       package.loaded['sort'] = nil
-      
+
       -- Setup plugin with natural_sort disabled.
       local sort = require('sort')
       sort.setup({ natural_sort = false })
@@ -346,7 +346,7 @@ describe('integration functionality', function()
         'line10',
         'line2',
         'line1',
-        'line20'
+        'line20',
       })
 
       -- Simulate line-wise motion.
@@ -359,7 +359,7 @@ describe('integration functionality', function()
         'line1',
         'line2',
         'line10',
-        'line20'
+        'line20',
       }, result)
     end)
   end)

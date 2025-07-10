@@ -21,7 +21,7 @@ local function get_text_for_motion(
     return table.concat(lines, '\n')
   elseif motion_type == 'char' then
     if start_pos[1] == end_pos[1] then
-      -- Same line
+      -- Same line.
       local line =
         vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, start_pos[1], false)[1]
 
@@ -37,7 +37,7 @@ local function get_text_for_motion(
 
       return extracted_text
     else
-      -- Multiple lines
+      -- Multiple lines.
       local lines =
         vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, end_pos[1], false)
       if #lines > 0 then
@@ -92,10 +92,10 @@ local function set_text_for_motion(
     local lines = vim.split(text, '\n')
     vim.api.nvim_buf_set_lines(0, start_pos[1] - 1, end_pos[1], false, lines)
   elseif motion_type == 'char' then
-    -- Check if text contains newlines to determine if it's truly single line
+    -- Check if text contains newlines to determine if it's truly single line.
     local lines = vim.split(text, '\n')
     if #lines == 1 and start_pos[1] == end_pos[1] then
-      -- Truly single line - get the actual line to check bounds
+      -- Truly single line - get the actual line to check bounds.
       local actual_line = vim.api.nvim_buf_get_lines(
         0,
         start_pos[1] - 1,
@@ -105,8 +105,8 @@ local function set_text_for_motion(
       local line_len = string.len(actual_line)
 
       if is_visual_marks then
-        -- Visual marks are 0-based, nvim_buf_set_text expects 0-based
-        -- Add 1 to end_pos[2] to make selection inclusive, but clamp to line length
+        -- Visual marks are 0-based, nvim_buf_set_text expects 0-based.
+        -- Add 1 to end_pos[2] to make selection inclusive, but clamp to line length.
         local end_col = math.min(end_pos[2] + 1, line_len)
         vim.api.nvim_buf_set_text(
           0,
@@ -117,7 +117,7 @@ local function set_text_for_motion(
           { text }
         )
       else
-        -- Operator marks are 0-based, use nvim_buf_set_text which expects 0-based
+        -- Operator marks are 0-based, use nvim_buf_set_text which expects 0-based.
         vim.api.nvim_buf_set_text(
           0,
           start_pos[1] - 1, -- Convert 1-based row to 0-based
@@ -128,11 +128,11 @@ local function set_text_for_motion(
         )
       end
     else
-      -- Text spans multiple lines or positions indicate multi-line
-      -- For complex multi-line replacements, use line-based replacement
+      -- Text spans multiple lines or positions indicate multi-line.
+      -- For complex multi-line replacements, use line-based replacement.
       local lines = vim.split(text, '\n')
 
-      -- Get the current line and modify it to preserve content before/after selection
+      -- Get the current line and modify it to preserve content before/after selection.
       local start_line = vim.api.nvim_buf_get_lines(
         0,
         start_pos[1] - 1,
@@ -146,11 +146,11 @@ local function set_text_for_motion(
         false
       )[1] or ''
 
-      -- Build the replacement lines
+      -- Build the replacement lines.
       local replacement_lines = {}
 
       if #lines == 1 then
-        -- Single line replacement
+        -- Single line replacement.
         local before_text = ''
         local after_text = ''
 
@@ -164,8 +164,8 @@ local function set_text_for_motion(
 
         table.insert(replacement_lines, before_text .. lines[1] .. after_text)
       else
-        -- Multi-line replacement
-        -- For line-sorted multiline content, preserve the exact sorted lines
+        -- Multi-line replacement.
+        -- For line-sorted multiline content, preserve the exact sorted lines.
         -- and only add prefix/suffix if they don't interfere with line structure.
         local before_text = string.sub(start_line, 1, start_pos[2])
         local after_text = string.sub(end_line, end_pos[2] + 2)
@@ -181,7 +181,7 @@ local function set_text_for_motion(
         replacement_lines = lines
       end
 
-      -- Replace the lines
+      -- Replace the lines.
       vim.api.nvim_buf_set_lines(
         0,
         start_pos[1] - 1,
@@ -198,7 +198,7 @@ local function set_text_for_motion(
     for i, line in ipairs(lines) do
       local row = start_pos[1] + i - 1
 
-      -- Get the current line to check bounds
+      -- Get the current line to check bounds.
       local current_line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1]
         or ''
       local line_len = string.len(current_line)
@@ -240,7 +240,7 @@ local function sort_text_with_trailing_delimiter(text, options)
     return text
   end
 
-  -- Check if text ends with a delimiter
+  -- Check if text ends with a delimiter.
   local config = require('sort.config')
   local delimiters = config.get_user_config().delimiters
 
@@ -258,12 +258,12 @@ local function sort_text_with_trailing_delimiter(text, options)
   end
 
   if has_trailing_delimiter then
-    -- Sort the text without the trailing delimiter, then add it back
+    -- Sort the text without the trailing delimiter, then add it back.
     local text_to_sort = string.sub(text, 1, -2)
     local sorted_content = sort.delimiter_sort(text_to_sort, options)
     return sorted_content .. trailing_delimiter
   else
-    -- No trailing delimiter, sort normally
+    -- No trailing delimiter, sort normally.
     return sort.delimiter_sort(text, options)
   end
 end
@@ -272,28 +272,28 @@ end
 --- @param motion_type string Motion type from operatorfunc
 --- @param from_visual boolean|nil Whether called from visual mode
 M.sort_operator = function(motion_type, from_visual)
-  -- Get the marks based on calling context
+  -- Get the marks based on calling context.
   local start_pos, end_pos, is_visual_marks
 
   if from_visual then
-    -- Called from visual mode - use visual marks
+    -- Called from visual mode - use visual marks.
     start_pos = vim.api.nvim_buf_get_mark(0, '<')
     end_pos = vim.api.nvim_buf_get_mark(0, '>')
     is_visual_marks = true
   else
-    -- Called from normal mode operator - use operator marks
+    -- Called from normal mode operator - use operator marks.
     start_pos = vim.api.nvim_buf_get_mark(0, '[')
     end_pos = vim.api.nvim_buf_get_mark(0, ']')
     is_visual_marks = false
   end
 
-  -- Check if we have valid positions
+  -- Check if we have valid positions.
   if start_pos[1] == 0 or end_pos[1] == 0 then
     return
   end
 
-  -- Special handling for $ motion that gets interpreted as line motion
-  -- When motion_type is 'line' but we have marks on the same line, treat as char motion
+  -- Special handling for $ motion that gets interpreted as line motion.
+  -- When motion_type is 'line' but we have marks on the same line, treat as char motion.
   local effective_motion_type = motion_type
   if motion_type == 'line' and start_pos[1] == end_pos[1] then
     -- This is likely a $ motion that vim interpreted as line motion.
@@ -308,27 +308,27 @@ M.sort_operator = function(motion_type, from_visual)
     effective_motion_type = 'char'
   end
 
-  -- Check if character motion covers "perfect lines" and convert to line motion
+  -- Check if character motion covers "perfect lines" and convert to line motion.
   if effective_motion_type == 'char' and start_pos[1] < end_pos[1] then
-    -- Multi-line character motion - check if it covers complete lines
+    -- Multi-line character motion - check if it covers complete lines.
     local first_line =
       vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, start_pos[1], false)[1]
     local last_line =
       vim.api.nvim_buf_get_lines(0, end_pos[1] - 1, end_pos[1], false)[1]
 
     if first_line and last_line then
-      -- Check if selection starts at beginning of first line
+      -- Check if selection starts at beginning of first line.
       local starts_at_line_beginning = start_pos[2] == 0
         or (
           start_pos[2] > 0
           and string.match(string.sub(first_line, 1, start_pos[2]), '^%s*$')
         )
 
-      -- Check if selection ends at or near end of last line
+      -- Check if selection ends at or near end of last line.
       local ends_at_line_end = end_pos[2] >= string.len(last_line) - 1
 
       if starts_at_line_beginning and ends_at_line_end then
-        -- This is a "perfect lines" selection - convert to line motion
+        -- This is a "perfect lines" selection - convert to line motion.
         effective_motion_type = 'line'
       end
     end
@@ -358,7 +358,7 @@ M.sort_operator = function(motion_type, from_visual)
   local lines = vim.split(text, '\n')
 
   if effective_motion_type == 'line' then
-    -- For line-wise motions, we need to handle each line separately
+    -- For line-wise motions, we need to handle each line separately.
     -- but still use delimiter sorting if it's a single line selection.
     if #lines == 1 then
       sorted_text = sort_text_with_trailing_delimiter(text, options)
@@ -371,21 +371,21 @@ M.sort_operator = function(motion_type, from_visual)
       sorted_text = sort.line_sort_text(text, line_options)
     end
   elseif effective_motion_type == 'block' then
-    -- For block-wise motions, treat each extracted text piece as a separate line
+    -- For block-wise motions, treat each extracted text piece as a separate line.
     -- For line sorting, disable numerical sorting to get alphabetical sorting.
     local block_options = vim.tbl_deep_extend('force', options, {
       numerical = false,
     })
     sorted_text = sort.line_sort_text(text, block_options)
   else
-    -- Character motion
-    -- Note: multi-line character motions that cover "perfect lines" have already been
-    -- converted to line motions above, so any multi-line character motion here is
-    -- a partial line selection that should use delimiter sorting
+    -- Character motion.
+    -- Note: multi-line character motions that cover "perfect lines" have already been.
+    -- converted to line motions above, so any multi-line character motion here is.
+    -- a partial line selection that should use delimiter sorting.
     sorted_text = sort_text_with_trailing_delimiter(text, options)
   end
 
-  -- Set the sorted text
+  -- Set the sorted text.
   set_text_for_motion(
     effective_motion_type,
     start_pos,
@@ -394,12 +394,12 @@ M.sort_operator = function(motion_type, from_visual)
     is_visual_marks
   )
 
-  -- Set up for dot repeat - operatorfunc should already be set by the mapping
-  -- Don't reset it here as it might interfere with the current operation
+  -- Set up for dot repeat - operatorfunc should already be set by the mapping.
+  -- Don't reset it here as it might interfere with the current operation.
 end
 
--- Make the function globally accessible for operatorfunc
--- vim's operatorfunc only passes motion_type, so we need a wrapper
+-- Make the function globally accessible for operatorfunc.
+-- vim's operatorfunc only passes motion_type, so we need a wrapper.
 _G._sort_operator = function(motion_type)
   return M.sort_operator(motion_type, false) -- false = not from visual mode
 end

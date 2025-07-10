@@ -10,7 +10,7 @@ local M = {}
 --- @param options SortOptions
 --- @return boolean
 local function compare_strings(a, b, options)
-  -- Use natural sorting if enabled
+  -- Use natural sorting if enabled.
   if options.natural then
     return utils.natural_compare(a, b, options.ignore_case)
   end
@@ -104,7 +104,7 @@ M.delimiter_sort = function(text, options)
     end
   end
 
-  -- Check if sorting will change the order
+  -- Check if sorting will change the order.
   local original_order = {}
   for i, item in ipairs(items) do
     original_order[i] = item.original_position
@@ -129,7 +129,7 @@ M.delimiter_sort = function(text, options)
   end
 
   -- Apply smart whitespace normalization (order changed OR inconsistent spacing with alignment).
-  -- For natural sorting, preserve original whitespace even if order changed
+  -- For natural sorting, preserve original whitespace even if order changed.
   local whitespace_config = user_config.whitespace or {}
   local needs_normalization = order_changed and not options.natural
 
