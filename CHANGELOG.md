@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2025-07-10
+
 ### Fixed
 - Multi-line character motions with text objects (e.g., `goi{`) now preserve whitespace correctly by treating "perfect lines" selections as line motions (#10).
+
+### Added
+- Pre-commit hooks and improved development tooling.
+- Project-specific development guidelines.
+
+### Changed
+- Improved code style consistency with proper comment formatting.
 
 ## [2.0.0] - 2025-07-09
 
@@ -63,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keybinding examples with detailed explanations.
 - Documentation for numerical sorting options.
 
-[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/sQVe/sort.nvim/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/sQVe/sort.nvim/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/sQVe/sort.nvim/releases/tag/v1.0.0
