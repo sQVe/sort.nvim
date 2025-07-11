@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Enhanced natural sorting with punctuation priority. Identifiers with punctuation (like `A=`, `func()`) now sort before identifiers with numeric suffixes (like `A1`, `func2`) when using natural sorting (`z` flag). This makes sorting more intuitive for shell aliases, CSS selectors, function definitions, and other programming content.
+
+### Fixed
+- Shell alias sorting now works as expected with natural sorting (#11).
+
 ## [2.0.1] - 2025-07-10
 
 ### Fixed

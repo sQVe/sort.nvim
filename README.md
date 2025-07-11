@@ -217,6 +217,24 @@ Use the `z` flag to enable natural sorting, which handles numbers in strings pro
 :Sort z
 ```
 
+Natural sorting also prioritizes punctuation over numeric continuations, making it ideal for programming content:
+
+```
+" Shell aliases
+" Before: A1='{ print $1 }', A2='{ print $2 }', A='| awk'
+" After:  A='| awk', A1='{ print $1 }', A2='{ print $2 }'
+
+" Function definitions  
+" Before: func1(), func10(), func()
+" After:  func(), func1(), func10()
+
+" CSS selectors
+" Before: .btn1, .btn:hover, .btn=active  
+" After:  .btn:hover, .btn=active, .btn1
+```
+
+This enhancement ensures that identifiers with punctuation (like `A=`, `func()`) sort before identifiers with numeric suffixes (like `A1`, `func2`).
+
 ### Intelligent Whitespace Handling
 
 The plugin automatically normalizes whitespace in sorted content while preserving alignment when appropriate. The `alignment_threshold` setting controls when whitespace is considered significant for alignment purposes.
