@@ -1079,6 +1079,147 @@ describe('sort', function()
     )
   end)
 
+  -- Punctuation priority tests for GitHub issue #11.
+  describe('natural sorting with punctuation priority', function()
+    -- GitHub issue #11: Shell alias sorting.
+    it('should sort shell aliases with punctuation before numbers', function()
+      local text = 'A1,A2,A3,A4,A,AI'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('A,A1,A2,A3,A4,AI', result)
+    end)
+
+    it(
+      'should prioritize punctuation over numbers in delimiter sort',
+      function()
+        local text = 'var2,var=,var:,var1'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+          natural = true,
+        }
+
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('var:,var=,var1,var2', result)
+      end
+    )
+
+    it('should handle multiple punctuation types consistently', function()
+      local text = 'item(),item=,item:,item1,item10'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('item(),item:,item=,item1,item10', result)
+    end)
+
+    it('should sort CSS-like selectors properly', function()
+      local text = 'btn2,btn:hover,btn=active,btn1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('btn:hover,btn=active,btn1,btn2', result)
+    end)
+
+    it('should handle function-like patterns', function()
+      local text = 'func10,func(),func2,func1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('func(),func1,func2,func10', result)
+    end)
+  end)
+
+  describe('natural sorting for lines with punctuation priority', function()
+    -- Test line sorting behaves the same as delimiter sorting.
+    it(
+      'should sort shell alias lines with punctuation before numbers',
+      function()
+        local text =
+          "alias -g A1=\"A '{ print $1 }'\"\nalias -g A2=\"A '{ print $2 }'\"\nalias -g A3=\"A '{ print $3 }'\"\nalias -g A4=\"A '{ print $4 }'\"\nalias -g A='| awk'\nalias -g AI='| ai'"
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+          natural = true,
+        }
+
+        local result = sort.line_sort_text(text, options)
+        assert.are.equal(
+          "alias -g A='| awk'\nalias -g A1=\"A '{ print $1 }'\"\nalias -g A2=\"A '{ print $2 }'\"\nalias -g A3=\"A '{ print $3 }'\"\nalias -g A4=\"A '{ print $4 }'\"\nalias -g AI='| ai'",
+          result
+        )
+      end
+    )
+
+    it('should prioritize punctuation over numbers in line sort', function()
+      local text = 'var2\nvar=\nvar:\nvar1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('var:\nvar=\nvar1\nvar2', result)
+    end)
+
+    it('should handle function definitions in code', function()
+      local text =
+        'function func10()\nfunction func()\nfunction func2()\nfunction func1()'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal(
+        'function func()\nfunction func1()\nfunction func2()\nfunction func10()',
+        result
+      )
+    end)
+  end)
+
   describe('natural sorting for lines', function()
     it('should sort lines naturally', function()
       local text = 'item10\nitem2\nitem1\nitem20'
