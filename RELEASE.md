@@ -1,78 +1,45 @@
 # Release Process
 
-This document outlines the process for creating a new release of sort.nvim.
-
-## Pre-release Checklist
-
-Before creating a release, ensure the following:
-
-- [ ] All tests pass locally (`make test`).
-- [ ] Code is properly formatted (`stylua --check lua/`).
-- [ ] Documentation is up to date.
-- [ ] CHANGELOG.md is updated with the new version and release date.
-- [ ] Version number in `lua/sort/init.lua` is updated.
+This document outlines the automated process for creating a new release of sort.nvim.
 
 ## Creating a Release
 
-1. **Update version number**:
-   ```bash
-   # Edit lua/sort/init.lua and update _VERSION
-   vim lua/sort/init.lua
-   ```
-
-2. **Update CHANGELOG.md**:
+1. **Update CHANGELOG.md**:
    - Move changes from "Unreleased" to a new version section.
-   - Add the release date.
-   - Update the comparison links at the bottom.
+   - Add the release date: `## [2.1.1] - 2025-07-11`.
 
-3. **Commit the changes**:
+2. **Run the release script**:
    ```bash
-   git add lua/sort/init.lua CHANGELOG.md
-   git commit -m "chore: prepare release v2.0.0"
+   ./scripts/release 2.1.1
    ```
 
-4. **Create and push the tag**:
-   ```bash
-   git tag -a v2.0.0 -m "Release version 2.0.0"
-   git push origin main
-   git push origin v2.0.0
-   ```
+The script automatically handles:
+- Version validation and conflict checking
+- Test execution and code formatting verification  
+- Version updates in `lua/sort/init.lua`
+- Git commit, tagging, and pushing to origin
 
-5. **Verify the release**:
-   - The GitHub Actions workflow will automatically run tests.
-   - If tests pass, a GitHub release will be created with:
-     - Release notes from CHANGELOG.md.
-     - Downloadable archives (tar.gz and zip).
+## Script Options
+
+```bash
+./scripts/release --dry-run 2.1.1    # Preview changes without executing
+./scripts/release --help             # Show all available options
+```
 
 ## Post-release
 
-After the release is created:
-
-1. **Prepare for next development cycle**:
-   - Add a new "Unreleased" section to CHANGELOG.md.
-   - Update the comparison link for "Unreleased".
-
-2. **Announce the release** (optional):
-   - Create announcements in relevant communities.
-   - Update any external documentation.
+After the tag is pushed, GitHub Actions will:
+- Run the full test suite
+- Create a GitHub release with changelog notes
+- Generate downloadable archives
 
 ## Version Numbering
 
 This project follows [Semantic Versioning](https://semver.org/):
-
-- **MAJOR**: Incompatible API changes.
-- **MINOR**: New functionality in a backwards compatible manner.
-- **PATCH**: Backwards compatible bug fixes.
+- **MAJOR**: Incompatible API changes
+- **MINOR**: New functionality in a backwards compatible manner  
+- **PATCH**: Backwards compatible bug fixes
 
 ## Troubleshooting
 
-If the release workflow fails:
-
-1. Check the GitHub Actions logs for errors.
-2. Ensure all required secrets are configured (GITHUB_TOKEN is automatic).
-3. Verify the CHANGELOG.md format matches the expected structure.
-4. Delete the tag and try again if needed:
-   ```bash
-   git tag -d v2.0.0
-   git push origin :refs/tags/v2.0.0
-   ```
+If the release script fails, it provides clear error messages and suggestions. For GitHub Actions issues, check the workflow logs at: https://github.com/sQVe/sort.nvim/actions

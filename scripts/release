@@ -10,11 +10,11 @@ NC='\033[0m' # No Color
 
 # Script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Configuration
-INIT_FILE="$PROJECT_ROOT/lua/sort/init.lua"
-CHANGELOG_FILE="$PROJECT_ROOT/CHANGELOG.md"
+INIT_FILE="${PROJECT_ROOT}/lua/sort/init.lua"
+CHANGELOG_FILE="${PROJECT_ROOT}/CHANGELOG.md"
 DRY_RUN=false
 SKIP_TESTS=false
 FORCE=false
@@ -39,7 +39,7 @@ print_error() {
 # Show usage information
 show_usage() {
   cat << EOF
-Usage: $0 [OPTIONS] <version>
+Usage: ${0} [OPTIONS] <version>
 
 Create a new release of sort.nvim with automated validation and tagging.
 
@@ -53,9 +53,9 @@ Options:
     -h, --help      Show this help message
 
 Examples:
-    $0 2.1.1                    # Create release v2.1.1
-    $0 --dry-run 2.2.0         # Preview release v2.2.0
-    $0 --force 2.1.1           # Release without confirmation
+    ${0} 2.1.1                    # Create release v2.1.1
+    ${0} --dry-run 2.2.0         # Preview release v2.2.0
+    ${0} --force 2.1.1           # Release without confirmation
 
 EOF
 }
@@ -63,8 +63,8 @@ EOF
 # Validate semantic version format
 validate_version() {
   local version="$1"
-  if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    print_error "Invalid version format: $version"
+  if [[ ! ${version} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    print_error "Invalid version format: ${version}"
     print_info "Version must follow semantic versioning (e.g., 2.1.1)"
     exit 1
   fi
@@ -92,12 +92,12 @@ check_working_directory() {
 check_main_branch() {
   local current_branch
   current_branch=$(git branch --show-current)
-  if [[ "$current_branch" != "main" ]]; then
-    print_warning "Not on main branch (currently on: $current_branch)"
-    if [[ "$FORCE" != "true" ]]; then
+  if [[ "${current_branch}" != "main" ]]; then
+    print_warning "Not on main branch (currently on: ${current_branch})"
+    if [[ "${FORCE}" != "true" ]]; then
       read -p "Continue anyway? [y/N] " -n 1 -r
       echo
-      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      if [[ ! ${REPLY} =~ ^[Yy]$ ]]; then
         exit 1
       fi
     fi
@@ -106,14 +106,14 @@ check_main_branch() {
 
 # Get current version from init.lua
 get_current_version() {
-  grep "_VERSION = " "$INIT_FILE" | cut -d"'" -f2
+  grep "_VERSION = " "${INIT_FILE}" | cut -d"'" -f2
 }
 
 # Check if version already exists as a tag
 check_version_exists() {
   local version="$1"
-  if git tag -l | grep -q "^v$version$"; then
-    print_error "Version v$version already exists as a git tag"
+  if git tag -l | grep -q "^v${version}$"; then
+    print_error "Version v${version} already exists as a git tag"
     exit 1
   fi
 }
@@ -124,41 +124,41 @@ update_init_version() {
   local current_version
   current_version=$(get_current_version)
 
-  print_info "Updating version in $INIT_FILE: $current_version -> $new_version"
+  print_info "Updating version in ${INIT_FILE}: ${current_version} -> ${new_version}"
 
-  if [[ "$DRY_RUN" == "true" ]]; then
-    print_info "[DRY RUN] Would update _VERSION to '$new_version'"
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    print_info "[DRY RUN] Would update _VERSION to '${new_version}'"
     return
   fi
 
   # Use sed to replace the version
-  if [[ "$OSTYPE" == "darwin"* ]]; then
+  if [[ "${OSTYPE}" == "darwin"* ]]; then
     # macOS requires empty string after -i
-    sed -i '' "s/_VERSION = '[^']*'/_VERSION = '$new_version'/" "$INIT_FILE"
+    sed -i '' "s/_VERSION = '[^']*'/_VERSION = '${new_version}'/" "${INIT_FILE}"
   else
-    sed -i "s/_VERSION = '[^']*'/_VERSION = '$new_version'/" "$INIT_FILE"
+    sed -i "s/_VERSION = '[^']*'/_VERSION = '${new_version}'/" "${INIT_FILE}"
   fi
 
-  print_success "Updated version in $INIT_FILE"
+  print_success "Updated version in ${INIT_FILE}"
 }
 
 # Check if changelog has entry for the version
 check_changelog_entry() {
   local version="$1"
-  if ! grep -q "^## \[$version\]" "$CHANGELOG_FILE"; then
-    print_error "No changelog entry found for version $version"
-    print_info "Please add an entry to $CHANGELOG_FILE before releasing"
-    print_info "Expected format: ## [$version] - $(date +%Y-%m-%d)"
+  if ! grep -q "^## \[${version}\]" "${CHANGELOG_FILE}"; then
+    print_error "No changelog entry found for version ${version}"
+    print_info "Please add an entry to ${CHANGELOG_FILE} before releasing"
+    print_info "Expected format: ## [${version}] - $(date +%Y-%m-%d)"
     exit 1
   fi
-  print_success "Changelog entry found for version $version"
+  print_success "Changelog entry found for version ${version}"
 }
 
 # Validate changelog entry has content
 validate_changelog_content() {
   local version="$1"
   local line_num
-  line_num=$(grep -n "^## \[$version\]" "$CHANGELOG_FILE" | cut -d: -f1)
+  line_num=$(grep -n "^## \[${version}\]" "${CHANGELOG_FILE}" | cut -d: -f1)
 
   # Check if there's content between this version and the next one
   local next_line_num=$((line_num + 1))
@@ -166,20 +166,20 @@ validate_changelog_content() {
 
   while IFS= read -r line; do
     next_line_num=$((next_line_num + 1))
-    if [[ $line =~ ^##[[:space:]] ]]; then
+    if [[ ${line} =~ ^##[[:space:]] ]]; then
       break
     fi
-    if [[ -n "${line// /}" && ! $line =~ ^[[:space:]]*$ ]]; then
+    if [[ -n "${line// /}" && ! ${line} =~ ^[[:space:]]*$ ]]; then
       content_lines=$((content_lines + 1))
     fi
-  done < <(tail -n +$next_line_num "$CHANGELOG_FILE")
+  done < <(tail -n +${next_line_num} "${CHANGELOG_FILE}")
 
-  if [[ $content_lines -lt 3 ]]; then
-    print_warning "Changelog entry for $version appears to be empty or minimal"
-    if [[ "$FORCE" != "true" ]]; then
+  if [[ ${content_lines} -lt 3 ]]; then
+    print_warning "Changelog entry for ${version} appears to be empty or minimal"
+    if [[ "${FORCE}" != "true" ]]; then
       read -p "Continue anyway? [y/N] " -n 1 -r
       echo
-      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      if [[ ! ${REPLY} =~ ^[Yy]$ ]]; then
         exit 1
       fi
     fi
@@ -188,19 +188,19 @@ validate_changelog_content() {
 
 # Run tests
 run_tests() {
-  if [[ "$SKIP_TESTS" == "true" ]]; then
+  if [[ "${SKIP_TESTS}" == "true" ]]; then
     print_warning "Skipping tests as requested"
     return
   fi
 
   print_info "Running tests..."
 
-  if [[ "$DRY_RUN" == "true" ]]; then
+  if [[ "${DRY_RUN}" == "true" ]]; then
     print_info "[DRY RUN] Would run: ./scripts/test"
     return
   fi
 
-  if ! "$SCRIPT_DIR/test"; then
+  if ! "${SCRIPT_DIR}/test"; then
     print_error "Tests failed"
     exit 1
   fi
@@ -212,7 +212,7 @@ run_tests() {
 check_formatting() {
   print_info "Checking code formatting..."
 
-  if [[ "$DRY_RUN" == "true" ]]; then
+  if [[ "${DRY_RUN}" == "true" ]]; then
     print_info "[DRY RUN] Would check: stylua --check lua/"
     return
   fi
@@ -230,30 +230,30 @@ check_formatting() {
 create_release() {
   local version="$1"
 
-  print_info "Creating release commit and tag for v$version"
+  print_info "Creating release commit and tag for v${version}"
 
-  if [[ "$DRY_RUN" == "true" ]]; then
-    print_info "[DRY RUN] Would create commit: chore: prepare release v$version"
-    print_info "[DRY RUN] Would create tag: v$version"
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    print_info "[DRY RUN] Would create commit: chore: prepare release v${version}"
+    print_info "[DRY RUN] Would create tag: v${version}"
     print_info "[DRY RUN] Would push to origin"
     return
   fi
 
   # Stage changes
-  git add "$INIT_FILE"
+  git add "${INIT_FILE}"
 
   # Create commit
-  git commit -m "chore: prepare release v$version"
+  git commit -m "chore: prepare release v${version}"
 
   # Create tag
-  git tag -a "v$version" -m "Release version $version"
+  git tag -a "v${version}" -m "Release version ${version}"
 
-  print_success "Created commit and tag for v$version"
+  print_success "Created commit and tag for v${version}"
 
   # Push changes
   print_info "Pushing changes to origin..."
   git push origin main
-  git push origin "v$version"
+  git push origin "v${version}"
 
   print_success "Pushed changes and tag to origin"
 }
@@ -263,10 +263,10 @@ show_summary() {
   local version="$1"
 
   echo
-  print_success "Release v$version completed successfully!"
+  print_success "Release v${version} completed successfully!"
   echo
   print_info "What happened:"
-  echo "  ✓ Updated version in $INIT_FILE"
+  echo "  ✓ Updated version in ${INIT_FILE}"
   echo "  ✓ Verified changelog entry exists"
   echo "  ✓ Ran tests and formatting checks"
   echo "  ✓ Created commit and tag"
@@ -302,7 +302,7 @@ parse_args() {
         exit 0
         ;;
       -*)
-        print_error "Unknown option: $1"
+        print_error "Unknown option: ${1}"
         show_usage
         exit 1
         ;;
@@ -312,7 +312,7 @@ parse_args() {
           show_usage
           exit 1
         fi
-        VERSION="$1"
+        VERSION="${1}"
         shift
         ;;
     esac
@@ -333,30 +333,30 @@ main() {
   echo
 
   # Validate inputs
-  validate_version "$VERSION"
+  validate_version "${VERSION}"
 
   # Pre-flight checks
   print_info "Running pre-flight checks..."
   check_git_repo
   check_working_directory
   check_main_branch
-  check_version_exists "$VERSION"
+  check_version_exists "${VERSION}"
 
   # Version checks
   local current_version
   current_version=$(get_current_version)
-  print_info "Current version: $current_version"
-  print_info "Target version: $VERSION"
+  print_info "Current version: ${current_version}"
+  print_info "Target version: ${VERSION}"
 
   # Changelog validation
-  check_changelog_entry "$VERSION"
-  validate_changelog_content "$VERSION"
+  check_changelog_entry "${VERSION}"
+  validate_changelog_content "${VERSION}"
 
   # Code quality checks
   check_formatting
   run_tests
 
-  if [[ "$DRY_RUN" == "true" ]]; then
+  if [[ "${DRY_RUN}" == "true" ]]; then
     echo
     print_info "Dry run completed. No changes were made."
     print_info "Run without --dry-run to execute the release."
@@ -364,22 +364,22 @@ main() {
   fi
 
   # Final confirmation
-  if [[ "$FORCE" != "true" ]]; then
+  if [[ "${FORCE}" != "true" ]]; then
     echo
-    print_warning "Ready to create release v$VERSION"
+    print_warning "Ready to create release v${VERSION}"
     read -p "Continue? [y/N] " -n 1 -r
     echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    if [[ ! ${REPLY} =~ ^[Yy]$ ]]; then
       print_info "Release cancelled"
       exit 0
     fi
   fi
 
   # Execute release
-  update_init_version "$VERSION"
-  create_release "$VERSION"
-  show_summary "$VERSION"
+  update_init_version "${VERSION}"
+  create_release "${VERSION}"
+  show_summary "${VERSION}"
 }
 
 # Run main function with all arguments
-main "$@"
+main "${@}"
