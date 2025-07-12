@@ -5,7 +5,7 @@ local utils = require('sort.utils')
 local mappings = require('sort.mappings')
 
 local M = {
-  _VERSION = '2.1.0',
+  _VERSION = '2.1.1',
   _DESCRIPTION = 'Sorting plugin for Neovim',
   _URL = 'https://github.com/sQVe/sort.nvim',
   _LICENSE = 'MIT',
