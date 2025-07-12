@@ -213,30 +213,41 @@ M.parse_natural_segments = function(str)
     local is_letter = string.match(current_char, '%a') ~= nil
     local is_punctuation = not is_digit and not is_letter
 
-    -- Collect all characters of the same type (digit, letter, or punctuation).
-    while i <= #str do
-      local char = str:sub(i, i)
-      local char_is_digit = string.match(char, '%d') ~= nil
-      local char_is_letter = string.match(char, '%a') ~= nil
-      local char_is_punctuation = not char_is_digit and not char_is_letter
-
-      -- Break if character type changes.
-      if
-        char_is_digit ~= is_digit
-        or char_is_letter ~= is_letter
-        or char_is_punctuation ~= is_punctuation
-      then
-        break
-      end
+    -- For punctuation, treat each character individually for better priority handling.
+    if is_punctuation then
+      local segment_text = str:sub(i, i)
+      table.insert(segments, {
+        text = segment_text,
+        is_number = false,
+        is_punctuation = true,
+      })
       i = i + 1
-    end
+    else
+      -- Collect all characters of the same type (digit or letter).
+      while i <= #str do
+        local char = str:sub(i, i)
+        local char_is_digit = string.match(char, '%d') ~= nil
+        local char_is_letter = string.match(char, '%a') ~= nil
+        local char_is_punctuation = not char_is_digit and not char_is_letter
 
-    local segment_text = str:sub(start, i - 1)
-    table.insert(segments, {
-      text = segment_text,
-      is_number = is_digit,
-      is_punctuation = is_punctuation,
-    })
+        -- Break if character type changes.
+        if
+          char_is_digit ~= is_digit
+          or char_is_letter ~= is_letter
+          or char_is_punctuation ~= is_punctuation
+        then
+          break
+        end
+        i = i + 1
+      end
+
+      local segment_text = str:sub(start, i - 1)
+      table.insert(segments, {
+        text = segment_text,
+        is_number = is_digit,
+        is_punctuation = is_punctuation,
+      })
+    end
   end
 
   return segments
@@ -248,11 +259,11 @@ end
 --- @param ignore_case boolean Whether to ignore case for text comparison
 --- @return number -1 if a < b, 0 if a == b, 1 if a > b
 M.compare_natural_segments = function(seg_a, seg_b, ignore_case)
-  -- Priority order: text < punctuation < numbers.
-  -- This ensures identifiers with punctuation (like A=) sort before identifiers with numbers (like A1).
+  -- Priority order: punctuation < text < numbers.
+  -- This ensures identifiers with punctuation (like @l) sort before text identifiers (like A).
 
-  local priority_a = seg_a.is_number and 3 or (seg_a.is_punctuation and 2 or 1)
-  local priority_b = seg_b.is_number and 3 or (seg_b.is_punctuation and 2 or 1)
+  local priority_a = seg_a.is_number and 3 or (seg_a.is_punctuation and 1 or 2)
+  local priority_b = seg_b.is_number and 3 or (seg_b.is_punctuation and 1 or 2)
 
   if priority_a ~= priority_b then
     return priority_a < priority_b and -1 or 1
