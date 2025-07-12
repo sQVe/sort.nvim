@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2025-07-12
+
+### Fixed
+- Corrected natural sorting priority for punctuation characters. Shell aliases like `@l` now properly sort before text identifiers like `A` when using natural sorting. This resolves an inconsistency where punctuation-prefixed identifiers were appearing after text identifiers instead of before them.
+
 ## [2.1.0] - 2025-07-11
 
 ### Added
