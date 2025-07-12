@@ -18,6 +18,13 @@ CHANGELOG_FILE="${PROJECT_ROOT}/CHANGELOG.md"
 DRY_RUN=false
 SKIP_TESTS=false
 FORCE=false
+AUTO=false
+
+# Environment variable support for CI/automation
+AUTO=${SORT_RELEASE_AUTO:-${AUTO}}
+FORCE=${SORT_FORCE:-${FORCE}}
+SKIP_TESTS=${SORT_SKIP_TESTS:-${SKIP_TESTS}}
+DRY_RUN=${SORT_DRY_RUN:-${DRY_RUN}}
 
 # Print colored output
 print_info() {
@@ -50,12 +57,21 @@ Options:
     -d, --dry-run   Show what would be done without making changes
     --skip-tests    Skip running tests (not recommended)
     --force         Skip confirmation prompts
+    --auto          Fully automated mode (implies --force, skips all prompts)
     -h, --help      Show this help message
+
+Environment Variables:
+    SORT_RELEASE_AUTO    Set to 'true' to enable auto mode
+    SORT_FORCE           Set to 'true' to enable force mode
+    SORT_SKIP_TESTS      Set to 'true' to skip tests
+    SORT_DRY_RUN         Set to 'true' to enable dry run mode
 
 Examples:
     ${0} 2.1.1                    # Create release v2.1.1
     ${0} --dry-run 2.2.0         # Preview release v2.2.0
     ${0} --force 2.1.1           # Release without confirmation
+    ${0} --auto 2.1.1            # Fully automated release
+    SORT_RELEASE_AUTO=true ${0} 2.1.1  # Using environment variable
 
 EOF
 }
@@ -163,20 +179,63 @@ validate_changelog_content() {
   # Check if there's content between this version and the next one
   local next_line_num=$((line_num + 1))
   local content_lines=0
+  local has_meaningful_entry=false
+  local entry_type=""
 
   while IFS= read -r line; do
     next_line_num=$((next_line_num + 1))
     if [[ ${line} =~ ^##[[:space:]] ]]; then
       break
     fi
-    if [[ -n "${line// /}" && ! ${line} =~ ^[[:space:]]*$ ]]; then
+
+    # Detect entry types (Added, Changed, Fixed, etc.)
+    if [[ ${line} =~ ^###[[:space:]]+(Added|Changed|Deprecated|Removed|Fixed|Security) ]]; then
+      entry_type="${BASH_REMATCH[1]}"
+    fi
+
+    # Count substantial content lines (not just headers or empty lines)
+    if [[ -n "${line// /}" && ! ${line} =~ ^[[:space:]]*$ && ! ${line} =~ ^###[[:space:]] ]]; then
       content_lines=$((content_lines + 1))
+      # Check for meaningful content (bullet points with substantial text)
+      if [[ ${line} =~ ^-[[:space:]]+.{20,} ]]; then
+        has_meaningful_entry=true
+      fi
     fi
   done < <(tail -n +${next_line_num} "${CHANGELOG_FILE}")
 
-  if [[ ${content_lines} -lt 3 ]]; then
-    print_warning "Changelog entry for ${version} appears to be empty or minimal"
-    if [[ "${FORCE}" != "true" ]]; then
+  # Smart validation based on entry type and content
+  local should_warn=false
+  local min_lines=3
+
+  case "${entry_type}" in
+    "Fixed")
+      # Bug fixes can be concise, require less content
+      min_lines=1
+      if [[ ${content_lines} -eq 0 ]]; then
+        should_warn=true
+      fi
+      ;;
+    "Added" | "Changed")
+      # Features need more explanation
+      min_lines=2
+      if [[ ${content_lines} -lt ${min_lines} && ! ${has_meaningful_entry} ]]; then
+        should_warn=true
+      fi
+      ;;
+    *)
+      # Default validation for unknown types
+      if [[ ${content_lines} -lt 2 ]]; then
+        should_warn=true
+      fi
+      ;;
+  esac
+
+  if [[ ${should_warn} == true ]]; then
+    print_warning "Changelog entry for ${version} appears to be empty or minimal (${entry_type:-Unknown} type)"
+    if [[ "${AUTO}" == "true" ]]; then
+      print_info "Auto mode enabled, continuing despite minimal changelog"
+      return
+    elif [[ "${FORCE}" != "true" ]]; then
       read -p "Continue anyway? [y/N] " -n 1 -r
       echo
       if [[ ! ${REPLY} =~ ^[Yy]$ ]]; then
@@ -297,6 +356,11 @@ parse_args() {
         FORCE=true
         shift
         ;;
+      --auto)
+        AUTO=true
+        FORCE=true # Auto mode implies force
+        shift
+        ;;
       -h | --help)
         show_usage
         exit 0
@@ -329,7 +393,17 @@ parse_args() {
 main() {
   parse_args "$@"
 
+  # Detect CI environment and enable auto mode
+  if [[ -n "${CI:-}" || -n "${GITHUB_ACTIONS:-}" || -n "${GITLAB_CI:-}" ]]; then
+    print_info "CI environment detected, enabling auto mode"
+    AUTO=true
+    FORCE=true
+  fi
+
   print_info "sort.nvim release script"
+  if [[ "${AUTO}" == "true" ]]; then
+    print_info "Running in automated mode"
+  fi
   echo
 
   # Validate inputs
@@ -364,7 +438,9 @@ main() {
   fi
 
   # Final confirmation
-  if [[ "${FORCE}" != "true" ]]; then
+  if [[ "${AUTO}" == "true" ]]; then
+    print_info "Auto mode enabled, proceeding with release v${VERSION}"
+  elif [[ "${FORCE}" != "true" ]]; then
     echo
     print_warning "Ready to create release v${VERSION}"
     read -p "Continue? [y/N] " -n 1 -r
