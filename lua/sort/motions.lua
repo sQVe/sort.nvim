@@ -18,6 +18,10 @@ local function find_next_delimiter(forward)
   local line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1] or ''
 
   if line == '' then
+    vim.notify(
+      'No sortable delimiters found on current line',
+      vim.log.levels.INFO
+    )
     return nil
   end
 

@@ -37,8 +37,21 @@ end
 --- Sort by top most matching delimiter.
 --- @param text string
 --- @param options SortOptions
---- @return string sorted_text
+--- @return string|nil sorted_text Returns sorted text or nil on error
 M.delimiter_sort = function(text, options)
+  if not text or type(text) ~= 'string' then
+    vim.notify('Invalid text input for delimiter sorting', vim.log.levels.ERROR)
+    return nil
+  end
+
+  if not options or type(options) ~= 'table' then
+    vim.notify(
+      'Invalid options provided for delimiter sorting',
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
+
   local original_text = text
   local user_config = config.get_user_config()
   local delimiters = options.delimiter and { options.delimiter }
@@ -63,7 +76,7 @@ M.delimiter_sort = function(text, options)
     return text
   end
 
-  -- Special case: if we have only 2 matches and one is empty,
+  -- Special case: if we have only 2 matches and one is empty.
   -- this indicates whitespace adjacent to a single item, not a list to sort.
   -- BUT only if this is from a text object selection (like 'aw'), not a manual selection.
   if #matches == 2 and (matches[1] == '' or matches[2] == '') then
@@ -313,26 +326,48 @@ M.line_sort = function(bang, arguments)
   local options = utils.parse_arguments(bang, arguments)
 
   -- Get the text from the selected lines.
-  local lines = vim.api.nvim_buf_get_lines(
+  local success, lines = pcall(
+    vim.api.nvim_buf_get_lines,
     0,
     selection.from.row - 1,
     selection.to.row,
     false
   )
+  if not success or not lines then
+    vim.notify(
+      string.format(
+        'Failed to retrieve lines %d-%d from buffer',
+        selection.from.row,
+        selection.to.row
+      ),
+      vim.log.levels.ERROR
+    )
+    return
+  end
+
   local text = table.concat(lines, '\n')
 
   -- Sort the text using our line sorting implementation.
   local sorted_text = M.line_sort_text(text, options)
+  if not sorted_text then
+    vim.notify('Failed to sort the selected lines', vim.log.levels.ERROR)
+    return
+  end
 
   -- Set the sorted lines back.
   local sorted_lines = vim.split(sorted_text, '\n')
-  vim.api.nvim_buf_set_lines(
+  local set_success = pcall(
+    vim.api.nvim_buf_set_lines,
     0,
     selection.from.row - 1,
     selection.to.row,
     false,
     sorted_lines
   )
+  if not set_success then
+    vim.notify('Failed to set sorted lines in buffer', vim.log.levels.ERROR)
+    return
+  end
 end
 
 return M

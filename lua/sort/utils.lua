@@ -164,8 +164,11 @@ M.detect_dominant_whitespace = function(
     end
   end
 
-  -- For comma-separated values, if the dominant pattern is empty string,
-  -- only add space if there are mixed spacing patterns (not all empty).
+  -- Technical decision: Comma-specific whitespace normalization strategy.
+  -- For CSV-like data, we apply intelligent spacing rules:
+  -- 1. If input has no spaces, preserve that compact style
+  -- 2. If input has mixed spacing, normalize to single space for readability
+  -- This approach respects user intent while improving consistency.
   if delimiter == ',' and dominant_pattern == '' then
     -- Check if there are any non-empty patterns.
     local has_spaces = false
@@ -181,7 +184,7 @@ M.detect_dominant_whitespace = function(
       dominant_pattern = ' '
     end
   elseif delimiter == ',' then
-    -- For comma delimiters, prefer single space for readability only when we have
+    -- For comma delimiters, prefer single space for readability only when we have.
     -- multiple inconsistent non-alignment patterns that need normalization.
     local non_empty_pattern_count = 0
     for pattern, _ in pairs(pattern_count) do
@@ -286,8 +289,11 @@ M.compare_natural_segments = function(seg_a, seg_b, ignore_case)
     local text_a = ignore_case and string.lower(seg_a.text) or seg_a.text
     local text_b = ignore_case and string.lower(seg_b.text) or seg_b.text
 
-    -- Special case: if both text segments end with minus and are followed by number segments,
-    -- treat this as negative number comparison.
+    -- Technical decision: Handle potential negative number prefixes.
+    -- When both segments end with '-', they might represent negative number prefixes.
+    -- We delegate to string comparison as extracting the number portion would require
+    -- complex lookahead parsing. This design choice prioritizes simplicity over
+    -- perfect negative number handling, which is an edge case in most sorting scenarios.
     if
       not seg_a.is_number
       and not seg_b.is_number
@@ -295,7 +301,7 @@ M.compare_natural_segments = function(seg_a, seg_b, ignore_case)
       and string.sub(text_b, -1) == '-'
     then
       -- This suggests they might be negative number prefixes.
-      -- We'll let the normal string comparison handle this, but the caller
+      -- We'll let the normal string comparison handle this, but the caller.
       -- should be aware this might need special handling.
     end
 
@@ -316,7 +322,7 @@ end
 --- @return boolean True if a should come before b
 M.natural_compare = function(a, b, ignore_case)
   -- Special case: detect negative number pattern.
-  -- If both strings have the pattern "prefix-number" where prefix is the same,
+  -- If both strings have the pattern "prefix-number" where prefix is the same.
   -- treat the numbers as negative for comparison.
   local prefix_a, num_a = string.match(a, '^(.-)%-(%d+)$')
   local prefix_b, num_b = string.match(b, '^(.-)%-(%d+)$')

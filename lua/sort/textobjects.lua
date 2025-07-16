@@ -83,6 +83,7 @@ M.select_inner = function()
   local selection = find_sortable_region(false)
 
   if not selection then
+    vim.notify('No sortable region found around cursor', vim.log.levels.WARN)
     -- Just beep and do nothing.
     vim.api.nvim_feedkeys(
       vim.api.nvim_replace_termcodes('<Nop>', true, false, true),
@@ -106,6 +107,7 @@ M.select_around = function()
   local selection = find_sortable_region(true)
 
   if not selection then
+    vim.notify('No sortable region found around cursor', vim.log.levels.WARN)
     -- Just beep and do nothing.
     vim.api.nvim_feedkeys(
       vim.api.nvim_replace_termcodes('<Nop>', true, false, true),

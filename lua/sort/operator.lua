@@ -289,6 +289,7 @@ M.sort_operator = function(motion_type, from_visual)
 
   -- Check if we have valid positions.
   if start_pos[1] == 0 or end_pos[1] == 0 then
+    vim.notify('No valid text selection found for sorting', vim.log.levels.WARN)
     return
   end
 
@@ -343,6 +344,7 @@ M.sort_operator = function(motion_type, from_visual)
   )
 
   if text == '' or text == nil then
+    vim.notify('No text selected for sorting operation', vim.log.levels.WARN)
     return
   end
 
