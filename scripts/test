@@ -57,15 +57,15 @@ if ! type -P nvim > /dev/null 2>&1; then
 fi
 
 # Check if test file exists
-if [[ ! -f "tests/minit.lua" ]]; then
-  echo "Error: Test file 'tests/minit.lua' not found" >&2
+if [[ ! -f "tests/minimal_init.lua" ]]; then
+  echo "Error: Test file 'tests/minimal_init.lua' not found" >&2
   exit 1
 fi
 
 # Run tests
 if [[ "${VERBOSE}" == "true" ]]; then
   echo "Running tests from: ${PROJECT_ROOT}"
-  echo "Using test file: tests/minit.lua"
+  echo "Using test file: tests/minimal_init.lua"
 fi
 
-nvim -l tests/minit.lua --minitest
+nvim -l tests/minimal_init.lua --minitest
