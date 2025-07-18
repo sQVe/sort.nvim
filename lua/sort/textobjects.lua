@@ -84,7 +84,6 @@ M.select_inner = function()
 
   if not selection then
     vim.notify('No sortable region found around cursor', vim.log.levels.WARN)
-    -- Just beep and do nothing.
     vim.api.nvim_feedkeys(
       vim.api.nvim_replace_termcodes('<Nop>', true, false, true),
       'n',
@@ -93,7 +92,6 @@ M.select_inner = function()
     return
   end
 
-  -- Set the selection marks and enter visual mode.
   local start_pos = { selection.from.row, selection.from.column - 1 }
   local end_pos = { selection.to.row, selection.to.column - 1 }
 
@@ -108,7 +106,6 @@ M.select_around = function()
 
   if not selection then
     vim.notify('No sortable region found around cursor', vim.log.levels.WARN)
-    -- Just beep and do nothing.
     vim.api.nvim_feedkeys(
       vim.api.nvim_replace_termcodes('<Nop>', true, false, true),
       'n',
@@ -117,7 +114,6 @@ M.select_around = function()
     return
   end
 
-  -- Set the selection marks and enter visual mode.
   local start_pos = { selection.from.row, selection.from.column - 1 }
   local end_pos = { selection.to.row, selection.to.column - 1 }
 

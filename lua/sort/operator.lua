@@ -21,7 +21,6 @@ local function get_text_for_motion(
     return table.concat(lines, '\n')
   elseif motion_type == 'char' then
     if start_pos[1] == end_pos[1] then
-      -- Same line.
       local line =
         vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, start_pos[1], false)[1]
 
@@ -37,7 +36,6 @@ local function get_text_for_motion(
 
       return extracted_text
     else
-      -- Multiple lines.
       local lines =
         vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, end_pos[1], false)
       if #lines > 0 then
@@ -95,7 +93,6 @@ local function set_text_for_motion(
     -- Check if text contains newlines to determine if it's truly single line.
     local lines = vim.split(text, '\n')
     if #lines == 1 and start_pos[1] == end_pos[1] then
-      -- Truly single line - get the actual line to check bounds.
       local actual_line = vim.api.nvim_buf_get_lines(
         0,
         start_pos[1] - 1,
@@ -132,7 +129,6 @@ local function set_text_for_motion(
       -- For complex multi-line replacements, use line-based replacement.
       local lines = vim.split(text, '\n')
 
-      -- Get the current line and modify it to preserve content before/after selection.
       local start_line = vim.api.nvim_buf_get_lines(
         0,
         start_pos[1] - 1,
@@ -146,11 +142,9 @@ local function set_text_for_motion(
         false
       )[1] or ''
 
-      -- Build the replacement lines.
       local replacement_lines = {}
 
       if #lines == 1 then
-        -- Single line replacement.
         local before_text = ''
         local after_text = ''
 
@@ -165,12 +159,11 @@ local function set_text_for_motion(
         table.insert(replacement_lines, before_text .. lines[1] .. after_text)
       else
         -- Multi-line replacement.
-        -- For line-sorted multiline content, preserve the exact sorted lines.
+        -- For line-sorted multiline content, preserve the exact sorted lines
         -- and only add prefix/suffix if they don't interfere with line structure.
         local before_text = string.sub(start_line, 1, start_pos[2])
         local after_text = string.sub(end_line, end_pos[2] + 2)
 
-        -- Only add prefix/suffix if they're meaningful (non-whitespace).
         if string.match(before_text, '%S') then
           lines[1] = before_text .. lines[1]
         end
@@ -181,7 +174,6 @@ local function set_text_for_motion(
         replacement_lines = lines
       end
 
-      -- Replace the lines.
       vim.api.nvim_buf_set_lines(
         0,
         start_pos[1] - 1,
@@ -198,7 +190,6 @@ local function set_text_for_motion(
     for i, line in ipairs(lines) do
       local row = start_pos[1] + i - 1
 
-      -- Get the current line to check bounds.
       local current_line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1]
         or ''
       local line_len = string.len(current_line)
@@ -272,7 +263,6 @@ end
 --- @param motion_type string Motion type from operatorfunc
 --- @param from_visual boolean|nil Whether called from visual mode
 M.sort_operator = function(motion_type, from_visual)
-  -- Get the marks based on calling context.
   local start_pos, end_pos, is_visual_marks
 
   if from_visual then
@@ -287,18 +277,15 @@ M.sort_operator = function(motion_type, from_visual)
     is_visual_marks = false
   end
 
-  -- Check if we have valid positions.
   if start_pos[1] == 0 or end_pos[1] == 0 then
     vim.notify('No valid text selection found for sorting', vim.log.levels.WARN)
     return
   end
 
-  -- Special handling for $ motion that gets interpreted as line motion.
-  -- When motion_type is 'line' but we have marks on the same line, treat as char motion.
+  -- This is likely a $ motion that vim interpreted as line motion.
+  -- Convert it to character motion to the end of the line.
   local effective_motion_type = motion_type
   if motion_type == 'line' and start_pos[1] == end_pos[1] then
-    -- This is likely a $ motion that vim interpreted as line motion.
-    -- Convert it to character motion to the end of the line.
     local line = vim.api.nvim_buf_get_lines(
       0,
       start_pos[1] - 1,
@@ -309,9 +296,8 @@ M.sort_operator = function(motion_type, from_visual)
     effective_motion_type = 'char'
   end
 
-  -- Check if character motion covers "perfect lines" and convert to line motion.
+  -- Multi-line character motion - check if it covers complete lines.
   if effective_motion_type == 'char' and start_pos[1] < end_pos[1] then
-    -- Multi-line character motion - check if it covers complete lines.
     local first_line =
       vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, start_pos[1], false)[1]
     local last_line =
@@ -335,7 +321,6 @@ M.sort_operator = function(motion_type, from_visual)
     end
   end
 
-  -- Get the text covered by the motion.
   local text = get_text_for_motion(
     effective_motion_type,
     start_pos,
@@ -348,10 +333,8 @@ M.sort_operator = function(motion_type, from_visual)
     return
   end
 
-  -- Parse default options (can be extended later for operator arguments).
   local options = utils.parse_arguments('', '')
 
-  -- Apply natural_sort configuration setting.
   local config = require('sort.config')
   local user_config = config.get_user_config()
   options.natural = user_config.natural_sort
@@ -360,7 +343,7 @@ M.sort_operator = function(motion_type, from_visual)
   local lines = vim.split(text, '\n')
 
   if effective_motion_type == 'line' then
-    -- For line-wise motions, we need to handle each line separately.
+    -- For line-wise motions, we need to handle each line separately
     -- but still use delimiter sorting if it's a single line selection.
     if #lines == 1 then
       sorted_text = sort_text_with_trailing_delimiter(text, options)
@@ -381,13 +364,12 @@ M.sort_operator = function(motion_type, from_visual)
     sorted_text = sort.line_sort_text(text, block_options)
   else
     -- Character motion.
-    -- Note: multi-line character motions that cover "perfect lines" have already been.
-    -- converted to line motions above, so any multi-line character motion here is.
+    -- Note: multi-line character motions that cover "perfect lines" have already been
+    -- converted to line motions above, so any multi-line character motion here is
     -- a partial line selection that should use delimiter sorting.
     sorted_text = sort_text_with_trailing_delimiter(text, options)
   end
 
-  -- Set the sorted text.
   set_text_for_motion(
     effective_motion_type,
     start_pos,

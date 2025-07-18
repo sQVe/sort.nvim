@@ -170,7 +170,6 @@ M.detect_dominant_whitespace = function(
   -- 2. If input has mixed spacing, normalize to single space for readability
   -- This approach respects user intent while improving consistency.
   if delimiter == ',' and dominant_pattern == '' then
-    -- Check if there are any non-empty patterns.
     local has_spaces = false
     for pattern, _ in pairs(pattern_count) do
       if pattern ~= '' then
@@ -184,8 +183,6 @@ M.detect_dominant_whitespace = function(
       dominant_pattern = ' '
     end
   elseif delimiter == ',' then
-    -- For comma delimiters, prefer single space for readability only when we have.
-    -- multiple inconsistent non-alignment patterns that need normalization.
     local non_empty_pattern_count = 0
     for pattern, _ in pairs(pattern_count) do
       if pattern ~= '' then

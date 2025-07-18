@@ -76,11 +76,10 @@ M.delimiter_sort = function(text, options)
     return text
   end
 
-  -- Special case: if we have only 2 matches and one is empty.
+  -- Special case: if we have only 2 matches and one is empty,
   -- this indicates whitespace adjacent to a single item, not a list to sort.
   -- BUT only if this is from a text object selection (like 'aw'), not a manual selection.
   if #matches == 2 and (matches[1] == '' or matches[2] == '') then
-    -- Additional check: if the non-empty match is a single word, don't sort.
     local non_empty_match = matches[1] ~= '' and matches[1] or matches[2]
     if non_empty_match and not string.match(non_empty_match, '%s') then
       return text
@@ -146,7 +145,6 @@ M.delimiter_sort = function(text, options)
   local whitespace_config = user_config.whitespace or {}
   local needs_normalization = order_changed and not options.natural
 
-  -- Special case: if we have alignment whitespace mixed with inconsistent non-alignment whitespace, normalize.
   if not needs_normalization then
     local alignment_threshold = whitespace_config.alignment_threshold or 3
     local has_alignment = false
@@ -162,7 +160,6 @@ M.delimiter_sort = function(text, options)
       end
     end
 
-    -- Count non-alignment patterns.
     local pattern_count = 0
     for _ in pairs(non_alignment_patterns) do
       pattern_count = pattern_count + 1
@@ -173,13 +170,12 @@ M.delimiter_sort = function(text, options)
     if has_alignment and pattern_count > 1 then
       needs_normalization = true
     elseif pattern_count > 1 then
-      -- Check if all non-alignment patterns are just spaces of different lengths.
       local all_spaces = true
       for pattern, _ in pairs(non_alignment_patterns) do
         if pattern ~= '' and not string.match(pattern, '^%s+$') then
           all_spaces = false
           break
-        elseif pattern ~= '' and string.match(pattern, '[^\32]') then -- Contains non-space whitespace.
+        elseif pattern ~= '' and string.match(pattern, '[^\32]') then
           all_spaces = false
           break
         end
@@ -197,7 +193,7 @@ M.delimiter_sort = function(text, options)
     -- Collect all leading whitespace patterns.
     local whitespace_patterns = {}
     for _, item in ipairs(items) do
-      if item.trimmed ~= '' then -- Skip whitespace-only segments.
+      if item.trimmed ~= '' then
         table.insert(whitespace_patterns, item.leading_ws)
       end
     end
@@ -211,7 +207,7 @@ M.delimiter_sort = function(text, options)
 
     -- Normalize whitespace for each item.
     for i, item in ipairs(items) do
-      if item.trimmed ~= '' then -- Skip whitespace-only segments.
+      if item.trimmed ~= '' then
         -- For comma-separated values, first item should have no leading whitespace.
         if i == 1 and top_translated_delimiter == ',' then
           item.leading_ws = ''
@@ -259,15 +255,12 @@ end
 --- @param options SortOptions
 --- @return string sorted_text
 M.line_sort_text = function(text, options)
-  -- Handle empty or nil input.
   if not text or text == '' then
     return text or ''
   end
 
-  -- Split text into lines.
   local lines = vim.split(text, '\n')
 
-  -- Handle single line (no sorting needed).
   if #lines <= 1 then
     return text
   end
@@ -325,7 +318,6 @@ M.line_sort = function(bang, arguments)
   local selection = interface.get_visual_selection()
   local options = utils.parse_arguments(bang, arguments)
 
-  -- Get the text from the selected lines.
   local success, lines = pcall(
     vim.api.nvim_buf_get_lines,
     0,
@@ -347,14 +339,12 @@ M.line_sort = function(bang, arguments)
 
   local text = table.concat(lines, '\n')
 
-  -- Sort the text using our line sorting implementation.
   local sorted_text = M.line_sort_text(text, options)
   if not sorted_text then
     vim.notify('Failed to sort the selected lines', vim.log.levels.ERROR)
     return
   end
 
-  -- Set the sorted lines back.
   local sorted_lines = vim.split(sorted_text, '\n')
   local set_success = pcall(
     vim.api.nvim_buf_set_lines,
