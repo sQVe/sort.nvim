@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.1.2] - 2025-07-30
-
-### Fixed
-
-- Preserve trailing delimiters instead of moving to beginning. This resolves an issue where trailing delimiters (like commas at the end of lists) were incorrectly repositioned to the start of sorted content.
-
 ### Added
 
 - Enhanced release script with automation support. The release script now supports CI environments, dry-run mode, and improved validation for streamlined releases.
@@ -21,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enhanced error handling and validation across core modules for improved stability.
 - Updated test infrastructure to use minimal_init.lua for better test isolation and reliability.
+
+## [2.1.2] - 2025-07-30
+
+### Fixed
+
+- Preserve trailing delimiters instead of moving to beginning. This resolves an issue where trailing delimiters (like commas at the end of lists) were incorrectly repositioned to the start of sorted content.
 
 ## [2.1.1] - 2025-07-12
 
