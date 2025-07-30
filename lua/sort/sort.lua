@@ -93,9 +93,19 @@ M.delimiter_sort = function(text, options)
     local trailing_ws = utils.get_trailing_whitespace(match)
     local trimmed = utils.trim_leading_and_trailing_whitespace(match)
 
-    -- For space delimiters, skip empty segments (they represent extra spaces).
-    if trimmed == '' and top_translated_delimiter == ' ' then
-      -- Skip empty segments for space-separated lists.
+    -- Skip structural trailing empty segment when:
+    -- 1. We have a trailing delimiter but no leading delimiter
+    -- 2. This is the last segment and it's empty
+    -- 3. This indicates the empty segment is structural, not content
+    local is_structural_trailing_empty = has_trailing_delimiter
+      and not has_leading_delimiter
+      and i == #matches
+      and match == ''
+
+    if is_structural_trailing_empty then
+      -- Skip structural trailing empty segment - it will be reconstructed later.
+    elseif trimmed == '' and top_translated_delimiter == ' ' then
+      -- For space delimiters, skip empty segments (they represent extra spaces).
     elseif trimmed == '' then
       -- For other delimiters, preserve whitespace-only segments.
       table.insert(items, {
