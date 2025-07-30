@@ -72,6 +72,76 @@ describe('sort', function()
       assert.are.equal('"1", "2",', result)
     end)
 
+    it('should preserve trailing pipe delimiter without moving it to beginning', function()
+      local text = '"1"|"2"|'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('"1"|"2"|', result)
+    end)
+
+    it('should preserve trailing semicolon delimiter without moving it to beginning', function()
+      local text = '"1";"2";'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('"1";"2";', result)
+    end)
+
+    it('should preserve trailing colon delimiter without moving it to beginning', function()
+      local text = '"1":"2":'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('"1":"2":', result)
+    end)
+
+    it('should preserve trailing space delimiter without moving it to beginning', function()
+      local text = '"1" "2" '
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('"1" "2" ', result)
+    end)
+
+    it('should preserve trailing tab delimiter without moving it to beginning', function()
+      local text = '"1"\t"2"\t'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('"1"\t"2"\t', result)
+    end)
+
     it('should return original text if no delimiters found', function()
       local text = 'singleword'
       local options = {
