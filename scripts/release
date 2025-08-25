@@ -45,7 +45,7 @@ print_error() {
 
 # Show usage information
 show_usage() {
-  cat << EOF
+  cat <<EOF
 Usage: ${0} [OPTIONS] <version>
 
 Create a new release of sort.nvim with automated validation and tagging.
@@ -88,7 +88,7 @@ validate_version() {
 
 # Check if we're in a git repository
 check_git_repo() {
-  if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     print_error "Not inside a git repository"
     exit 1
   fi
@@ -208,26 +208,26 @@ validate_changelog_content() {
   local min_lines=3
 
   case "${entry_type}" in
-    "Fixed")
-      # Bug fixes can be concise, require less content
-      min_lines=1
-      if [[ ${content_lines} -eq 0 ]]; then
-        should_warn=true
-      fi
-      ;;
-    "Added" | "Changed")
-      # Features need more explanation
-      min_lines=2
-      if [[ ${content_lines} -lt ${min_lines} && ! ${has_meaningful_entry} ]]; then
-        should_warn=true
-      fi
-      ;;
-    *)
-      # Default validation for unknown types
-      if [[ ${content_lines} -lt 2 ]]; then
-        should_warn=true
-      fi
-      ;;
+  "Fixed")
+    # Bug fixes can be concise, require less content
+    min_lines=1
+    if [[ ${content_lines} -eq 0 ]]; then
+      should_warn=true
+    fi
+    ;;
+  "Added" | "Changed")
+    # Features need more explanation
+    min_lines=2
+    if [[ ${content_lines} -lt ${min_lines} && ! ${has_meaningful_entry} ]]; then
+      should_warn=true
+    fi
+    ;;
+  *)
+    # Default validation for unknown types
+    if [[ ${content_lines} -lt 2 ]]; then
+      should_warn=true
+    fi
+    ;;
   esac
 
   if [[ ${should_warn} == true ]]; then
@@ -276,7 +276,7 @@ check_formatting() {
     return
   fi
 
-  if ! stylua --check lua/ > /dev/null 2>&1; then
+  if ! stylua --check lua/ >/dev/null 2>&1; then
     print_error "Code is not properly formatted"
     print_info "Run: stylua lua/ to fix formatting"
     exit 1
@@ -344,41 +344,41 @@ show_summary() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case $1 in
-      -d | --dry-run)
-        DRY_RUN=true
-        shift
-        ;;
-      --skip-tests)
-        SKIP_TESTS=true
-        shift
-        ;;
-      --force)
-        FORCE=true
-        shift
-        ;;
-      --auto)
-        AUTO=true
-        FORCE=true # Auto mode implies force
-        shift
-        ;;
-      -h | --help)
-        show_usage
-        exit 0
-        ;;
-      -*)
-        print_error "Unknown option: ${1}"
+    -d | --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    --skip-tests)
+      SKIP_TESTS=true
+      shift
+      ;;
+    --force)
+      FORCE=true
+      shift
+      ;;
+    --auto)
+      AUTO=true
+      FORCE=true # Auto mode implies force
+      shift
+      ;;
+    -h | --help)
+      show_usage
+      exit 0
+      ;;
+    -*)
+      print_error "Unknown option: ${1}"
+      show_usage
+      exit 1
+      ;;
+    *)
+      if [[ -n "${VERSION:-}" ]]; then
+        print_error "Multiple versions specified"
         show_usage
         exit 1
-        ;;
-      *)
-        if [[ -n "${VERSION:-}" ]]; then
-          print_error "Multiple versions specified"
-          show_usage
-          exit 1
-        fi
-        VERSION="${1}"
-        shift
-        ;;
+      fi
+      VERSION="${1}"
+      shift
+      ;;
     esac
   done
 
