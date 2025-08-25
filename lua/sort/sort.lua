@@ -52,7 +52,6 @@ M.delimiter_sort = function(text, options)
     return nil
   end
 
-  local original_text = text
   local user_config = config.get_user_config()
   local delimiters = options.delimiter and { options.delimiter }
     or user_config.delimiters
@@ -102,27 +101,25 @@ M.delimiter_sort = function(text, options)
       and i == #matches
       and match == ''
 
-    if is_structural_trailing_empty then
-      -- Skip structural trailing empty segment - it will be reconstructed later.
-    elseif trimmed == '' and top_translated_delimiter == ' ' then
-      -- For space delimiters, skip empty segments (they represent extra spaces).
-    elseif trimmed == '' then
-      -- For other delimiters, preserve whitespace-only segments.
-      table.insert(items, {
-        original = match,
-        trimmed = trimmed,
-        leading_ws = '',
-        trailing_ws = match,
-        original_position = i,
-      })
-    else
-      table.insert(items, {
-        original = match,
-        trimmed = trimmed,
-        leading_ws = leading_ws,
-        trailing_ws = trailing_ws,
-        original_position = i,
-      })
+    if not is_structural_trailing_empty then
+      if trimmed == '' and top_translated_delimiter ~= ' ' then
+        -- For other delimiters, preserve whitespace-only segments.
+        table.insert(items, {
+          original = match,
+          trimmed = trimmed,
+          leading_ws = '',
+          trailing_ws = match,
+          original_position = i,
+        })
+      elseif trimmed ~= '' then
+        table.insert(items, {
+          original = match,
+          trimmed = trimmed,
+          leading_ws = leading_ws,
+          trailing_ws = trailing_ws,
+          original_position = i,
+        })
+      end
     end
   end
 
@@ -182,10 +179,13 @@ M.delimiter_sort = function(text, options)
     elseif pattern_count > 1 then
       local all_spaces = true
       for pattern, _ in pairs(non_alignment_patterns) do
-        if pattern ~= '' and not string.match(pattern, '^%s+$') then
-          all_spaces = false
-          break
-        elseif pattern ~= '' and string.match(pattern, '[^\32]') then
+        if
+          pattern ~= ''
+          and (
+            not string.match(pattern, '^%s+$')
+            or string.match(pattern, '[^\32]')
+          )
+        then
           all_spaces = false
           break
         end
@@ -327,6 +327,10 @@ end
 M.line_sort = function(bang, arguments)
   local selection = interface.get_visual_selection()
   local options = utils.parse_arguments(bang, arguments)
+
+  -- Apply config defaults if not explicitly set by arguments
+  local user_config = config.get_user_config()
+  options.ignore_case = options.ignore_case or user_config.ignore_case
 
   local success, lines = pcall(
     vim.api.nvim_buf_get_lines,

@@ -5,6 +5,7 @@ local defaults = {
   delimiters = { ',', '|', ';', ':', 's', 't' },
   keymap = 'go',
   natural_sort = true,
+  ignore_case = false,
   whitespace = {
     alignment_threshold = 3,
   },
