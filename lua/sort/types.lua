@@ -3,6 +3,7 @@
 --- @field public keymap string
 --- @field public mappings table
 --- @field public natural_sort boolean
+--- @field public ignore_case boolean
 
 --- @class SelectionFragment
 --- @field public row integer
