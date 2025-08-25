@@ -1,0 +1,30 @@
+repos:
+  # Shell formatter
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.12.0-2
+    hooks:
+      - id: shfmt
+        args: [-i, "2", -bn, -ci, -sr]
+
+  # Shell linter
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.11.0
+    hooks:
+      - id: shellcheck
+
+  # Lua formatter
+  - repo: https://github.com/JohnnyMorganz/StyLua
+    rev: v2.1.0
+    hooks:
+      - id: stylua-github
+
+  # Lua linter (requires selene to be installed)
+  - repo: local
+    hooks:
+      - id: selene
+        name: selene
+        entry: selene
+        language: system
+        types: [lua]
+        pass_filenames: true
+        require_serial: true
