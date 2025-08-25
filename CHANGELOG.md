@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `ignore_case` configuration option to set default case sensitivity for all sorting operations. When enabled, all sorts are case-insensitive by default.
 - Enhanced release script with automation support. The release script now supports CI environments, dry-run mode, and improved validation for streamlined releases.
 
 ### Changed
