@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-08-25
+
 ### Added
 
 - Added `ignore_case` configuration option to set default case sensitivity for all sorting operations. When enabled, all sorts are case-insensitive by default.
@@ -16,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enhanced error handling and validation across core modules for improved stability.
 - Updated test infrastructure to use minimal_init.lua for better test isolation and reliability.
+
+### Fixed
+
+- Corrected natural sorting algorithm that was incorrectly placing numbers after text. Removed priority system that was pushing numbers to bottom of sort order (#14).
 
 ## [2.1.2] - 2025-07-30
 
@@ -98,7 +104,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keybinding examples with detailed explanations.
 - Documentation for numerical sorting options.
 
-[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/sQVe/sort.nvim/compare/v2.1.2...v2.2.0
+[2.1.2]: https://github.com/sQVe/sort.nvim/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/sQVe/sort.nvim/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/sQVe/sort.nvim/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/sQVe/sort.nvim/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/sQVe/sort.nvim/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/sQVe/sort.nvim/releases/tag/v1.0.0
