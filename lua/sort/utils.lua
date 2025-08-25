@@ -140,14 +140,10 @@ M.detect_dominant_whitespace = function(
   delimiter
 )
   local pattern_count = {}
-  local alignment_patterns = {}
 
   -- Count occurrences of each whitespace pattern.
   for _, ws in ipairs(whitespace_list) do
-    if string.len(ws) >= alignment_threshold then
-      -- Track alignment patterns separately.
-      table.insert(alignment_patterns, ws)
-    else
+    if string.len(ws) < alignment_threshold then
       -- Count all patterns including empty string.
       pattern_count[ws] = (pattern_count[ws] or 0) + 1
     end
@@ -259,19 +255,11 @@ end
 --- @param ignore_case boolean Whether to ignore case for text comparison
 --- @return number -1 if a < b, 0 if a == b, 1 if a > b
 M.compare_natural_segments = function(seg_a, seg_b, ignore_case)
-  -- Priority order: punctuation < text < numbers.
-  -- This ensures identifiers with punctuation (like @l) sort before text identifiers (like A).
+  -- Natural comparison without global type segregation.
+  -- Apply special priority only for punctuation when comparing within same context.
 
-  local priority_a = seg_a.is_number and 3 or (seg_a.is_punctuation and 1 or 2)
-  local priority_b = seg_b.is_number and 3 or (seg_b.is_punctuation and 1 or 2)
-
-  if priority_a ~= priority_b then
-    return priority_a < priority_b and -1 or 1
-  end
-
-  -- Same type - compare within type.
+  -- Handle number vs number comparison.
   if seg_a.is_number and seg_b.is_number then
-    -- Both are numbers - compare numerically.
     local num_a = tonumber(seg_a.text)
     local num_b = tonumber(seg_b.text)
     if num_a < num_b then
@@ -281,34 +269,34 @@ M.compare_natural_segments = function(seg_a, seg_b, ignore_case)
     else
       return 0
     end
+  end
+
+  -- Handle punctuation vs non-punctuation (local priority for GitHub issue #11).
+  -- This ensures punctuation sorts before text/numbers within the same base context.
+  if seg_a.is_punctuation and not seg_b.is_punctuation then
+    return -1
+  end
+  if not seg_a.is_punctuation and seg_b.is_punctuation then
+    return 1
+  end
+
+  -- Both are text, punctuation, or mixed - compare as strings.
+  local text_a = ignore_case and string.lower(seg_a.text) or seg_a.text
+  local text_b = ignore_case and string.lower(seg_b.text) or seg_b.text
+
+  -- Technical decision: Handle potential negative number prefixes.
+  -- When both segments end with '-', they might represent negative number prefixes.
+  -- We delegate to string comparison as extracting the number portion would require
+  -- complex lookahead parsing. This design choice prioritizes simplicity over
+  -- perfect negative number handling, which is an edge case in most sorting scenarios.
+  -- Note: Potential negative number prefixes are handled by string comparison.
+
+  if text_a < text_b then
+    return -1
+  elseif text_a > text_b then
+    return 1
   else
-    -- Both are text or punctuation - compare as strings.
-    local text_a = ignore_case and string.lower(seg_a.text) or seg_a.text
-    local text_b = ignore_case and string.lower(seg_b.text) or seg_b.text
-
-    -- Technical decision: Handle potential negative number prefixes.
-    -- When both segments end with '-', they might represent negative number prefixes.
-    -- We delegate to string comparison as extracting the number portion would require
-    -- complex lookahead parsing. This design choice prioritizes simplicity over
-    -- perfect negative number handling, which is an edge case in most sorting scenarios.
-    if
-      not seg_a.is_number
-      and not seg_b.is_number
-      and string.sub(text_a, -1) == '-'
-      and string.sub(text_b, -1) == '-'
-    then
-      -- This suggests they might be negative number prefixes.
-      -- We'll let the normal string comparison handle this, but the caller.
-      -- should be aware this might need special handling.
-    end
-
-    if text_a < text_b then
-      return -1
-    elseif text_a > text_b then
-      return 1
-    else
-      return 0
-    end
+    return 0
   end
 end
 
