@@ -58,89 +58,107 @@ describe('sort', function()
       assert.are.equal(',,,apple,banana,cherry,', result)
     end)
 
-    it('should preserve trailing comma without moving it to beginning', function()
-      local text = '"1", "2",'
-      local options = {
-        delimiter = nil,
-        ignore_case = false,
-        numerical = nil,
-        reverse = false,
-        unique = false,
-      }
+    it(
+      'should preserve trailing comma without moving it to beginning',
+      function()
+        local text = '"1", "2",'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
 
-      local result = sort.delimiter_sort(text, options)
-      assert.are.equal('"1", "2",', result)
-    end)
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('"1", "2",', result)
+      end
+    )
 
-    it('should preserve trailing pipe delimiter without moving it to beginning', function()
-      local text = '"1"|"2"|'
-      local options = {
-        delimiter = nil,
-        ignore_case = false,
-        numerical = nil,
-        reverse = false,
-        unique = false,
-      }
+    it(
+      'should preserve trailing pipe delimiter without moving it to beginning',
+      function()
+        local text = '"1"|"2"|'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
 
-      local result = sort.delimiter_sort(text, options)
-      assert.are.equal('"1"|"2"|', result)
-    end)
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('"1"|"2"|', result)
+      end
+    )
 
-    it('should preserve trailing semicolon delimiter without moving it to beginning', function()
-      local text = '"1";"2";'
-      local options = {
-        delimiter = nil,
-        ignore_case = false,
-        numerical = nil,
-        reverse = false,
-        unique = false,
-      }
+    it(
+      'should preserve trailing semicolon delimiter without moving it to beginning',
+      function()
+        local text = '"1";"2";'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
 
-      local result = sort.delimiter_sort(text, options)
-      assert.are.equal('"1";"2";', result)
-    end)
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('"1";"2";', result)
+      end
+    )
 
-    it('should preserve trailing colon delimiter without moving it to beginning', function()
-      local text = '"1":"2":'
-      local options = {
-        delimiter = nil,
-        ignore_case = false,
-        numerical = nil,
-        reverse = false,
-        unique = false,
-      }
+    it(
+      'should preserve trailing colon delimiter without moving it to beginning',
+      function()
+        local text = '"1":"2":'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
 
-      local result = sort.delimiter_sort(text, options)
-      assert.are.equal('"1":"2":', result)
-    end)
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('"1":"2":', result)
+      end
+    )
 
-    it('should preserve trailing space delimiter without moving it to beginning', function()
-      local text = '"1" "2" '
-      local options = {
-        delimiter = nil,
-        ignore_case = false,
-        numerical = nil,
-        reverse = false,
-        unique = false,
-      }
+    it(
+      'should preserve trailing space delimiter without moving it to beginning',
+      function()
+        local text = '"1" "2" '
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
 
-      local result = sort.delimiter_sort(text, options)
-      assert.are.equal('"1" "2" ', result)
-    end)
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('"1" "2" ', result)
+      end
+    )
 
-    it('should preserve trailing tab delimiter without moving it to beginning', function()
-      local text = '"1"\t"2"\t'
-      local options = {
-        delimiter = nil,
-        ignore_case = false,
-        numerical = nil,
-        reverse = false,
-        unique = false,
-      }
+    it(
+      'should preserve trailing tab delimiter without moving it to beginning',
+      function()
+        local text = '"1"\t"2"\t'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
 
-      local result = sort.delimiter_sort(text, options)
-      assert.are.equal('"1"\t"2"\t', result)
-    end)
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('"1"\t"2"\t', result)
+      end
+    )
 
     it('should return original text if no delimiters found', function()
       local text = 'singleword'
@@ -1161,6 +1179,71 @@ describe('sort', function()
         assert.are.equal('item1,item2,item010,item100', result)
       end
     )
+  end)
+
+  describe('natural sorting Intl.Collator compatibility', function()
+    it('should interleave numbers and text naturally', function()
+      local text = 'text,10,apple,2,banana,1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('1,2,10,apple,banana,text', result)
+    end)
+
+    it('should handle mixed types with numbers at start', function()
+      local text = 'file,file10,10file,10,file2'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('10,10file,file,file2,file10', result)
+    end)
+
+    it('should fix original issue - numbers interleave with text', function()
+      local text = '01-one,2-two-no-zero,this,is,THIS,Text,text,00-zero'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal(
+        '00-zero,01-one,2-two-no-zero,THIS,Text,is,text,this',
+        result
+      )
+    end)
+
+    it('should handle pure numbers vs text interleaving', function()
+      local text = '100,20,apple,3,banana'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('3,20,100,apple,banana', result)
+    end)
   end)
 
   -- Punctuation priority tests for GitHub issue #11.
