@@ -4,9 +4,10 @@ This document outlines the automated process for creating a new release of sort.
 
 ## Creating a Release
 
-1. **Update CHANGELOG.md**:
+1. **Update CHANGELOG.md** (do NOT commit):
    - Move changes from "Unreleased" to a new version section.
    - Add the release date: `## [2.1.1] - 2025-07-11`.
+   - **Important**: Leave these changes uncommitted - the script handles all git operations.
 
 2. **Run the release script**:
    ```bash
@@ -18,7 +19,7 @@ The script automatically handles:
 - Version validation and conflict checking
 - Test execution and code formatting verification
 - Version updates in `lua/sort/init.lua`
-- Git commit, tagging, and pushing to origin
+- Git staging, commit creation, tagging, and pushing to origin
 
 ## Script Options
 
