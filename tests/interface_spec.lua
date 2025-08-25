@@ -21,7 +21,7 @@ describe('interface', function()
 
     -- Mock vim.api functions.
     local original_get_lines = vim.api.nvim_buf_get_lines
-    vim.api.nvim_buf_get_lines = function(buf, start, end_, strict)
+    vim.api.nvim_buf_get_lines = function(_, _, _, _)
       return mock_data.buf_lines
     end
 
@@ -57,6 +57,7 @@ describe('interface', function()
     mock_data._original_getpos = original_getpos
   end)
 
+  -- selene: allow(undefined_variable)
   after_each(function()
     -- Restore original functions.
     vim.cmd = mock_data._original_cmd

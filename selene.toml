@@ -2,3 +2,7 @@ std="vim"
 
 [lints]
 mixed_table="allow"
+
+# Test framework globals
+[config]
+globals=["describe", "it", "before_each", "after_each", "assert", "spy", "stub", "mock", "pending", "setup", "teardown"]

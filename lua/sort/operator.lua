@@ -9,12 +9,7 @@ local M = {}
 --- @param end_pos table End position [row, col]
 --- @param is_visual_marks boolean Whether marks are from visual mode (0-based) or operator (1-based)
 --- @return string text
-local function get_text_for_motion(
-  motion_type,
-  start_pos,
-  end_pos,
-  is_visual_marks
-)
+local function get_text_for_motion(motion_type, start_pos, end_pos, _)
   if motion_type == 'line' then
     local lines =
       vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, end_pos[1], false)
@@ -24,28 +19,18 @@ local function get_text_for_motion(
       local line =
         vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, start_pos[1], false)[1]
 
-      local extracted_text
-      if is_visual_marks then
-        -- Visual marks are 0-based, string.sub is 1-based, so add 1.
-        -- Also add 1 to end_pos to make selection inclusive.
-        extracted_text = string.sub(line, start_pos[2] + 1, end_pos[2] + 1)
-      else
-        -- Operator marks are 0-based, convert to 1-based for string.sub.
-        extracted_text = string.sub(line, start_pos[2] + 1, end_pos[2] + 1)
-      end
+      -- Both visual marks and operator marks are 0-based, convert to 1-based for string.sub.
+      -- Add 1 to end_pos to make selection inclusive.
+      local extracted_text = string.sub(line, start_pos[2] + 1, end_pos[2] + 1)
 
       return extracted_text
     else
       local lines =
         vim.api.nvim_buf_get_lines(0, start_pos[1] - 1, end_pos[1], false)
       if #lines > 0 then
-        if is_visual_marks then
-          lines[1] = string.sub(lines[1], start_pos[2] + 1)
-          lines[#lines] = string.sub(lines[#lines], 1, end_pos[2] + 1)
-        else
-          lines[1] = string.sub(lines[1], start_pos[2] + 1)
-          lines[#lines] = string.sub(lines[#lines], 1, end_pos[2] + 1)
-        end
+        -- Both visual marks and operator marks use the same processing
+        lines[1] = string.sub(lines[1], start_pos[2] + 1)
+        lines[#lines] = string.sub(lines[#lines], 1, end_pos[2] + 1)
         return table.concat(lines, '\n')
       end
     end
@@ -57,16 +42,10 @@ local function get_text_for_motion(
       local end_col = math.max(start_pos[2], end_pos[2])
       local line_len = string.len(line)
 
-      if is_visual_marks then
-        -- Visual marks are 0-based, string.sub is 1-based, so add 1.
-        -- Also add 1 to end_col to make selection inclusive, but clamp to line length.
-        local end_col_clamped = math.min(end_col + 1, line_len)
-        table.insert(lines, string.sub(line, start_col + 1, end_col_clamped))
-      else
-        -- Operator marks are 0-based, convert to 1-based for string.sub.
-        local end_col_clamped = math.min(end_col + 1, line_len)
-        table.insert(lines, string.sub(line, start_col + 1, end_col_clamped))
-      end
+      -- Both visual marks and operator marks are 0-based, convert to 1-based for string.sub.
+      -- Add 1 to end_col to make selection inclusive, but clamp to line length.
+      local end_col_clamped = math.min(end_col + 1, line_len)
+      table.insert(lines, string.sub(line, start_col + 1, end_col_clamped))
     end
     return table.concat(lines, '\n')
   end
@@ -127,7 +106,7 @@ local function set_text_for_motion(
     else
       -- Text spans multiple lines or positions indicate multi-line.
       -- For complex multi-line replacements, use line-based replacement.
-      local lines = vim.split(text, '\n')
+      local sorted_lines = vim.split(text, '\n')
 
       local start_line = vim.api.nvim_buf_get_lines(
         0,
@@ -144,19 +123,18 @@ local function set_text_for_motion(
 
       local replacement_lines = {}
 
-      if #lines == 1 then
+      if #sorted_lines == 1 then
         local before_text = ''
         local after_text = ''
 
-        if is_visual_marks then
-          before_text = string.sub(start_line, 1, start_pos[2])
-          after_text = string.sub(end_line, end_pos[2] + 2)
-        else
-          before_text = string.sub(start_line, 1, start_pos[2])
-          after_text = string.sub(end_line, end_pos[2] + 2)
-        end
+        -- Both visual marks and operator marks use the same text extraction
+        before_text = string.sub(start_line, 1, start_pos[2])
+        after_text = string.sub(end_line, end_pos[2] + 2)
 
-        table.insert(replacement_lines, before_text .. lines[1] .. after_text)
+        table.insert(
+          replacement_lines,
+          before_text .. sorted_lines[1] .. after_text
+        )
       else
         -- Multi-line replacement.
         -- For line-sorted multiline content, preserve the exact sorted lines
@@ -164,14 +142,14 @@ local function set_text_for_motion(
         local before_text = string.sub(start_line, 1, start_pos[2])
         local after_text = string.sub(end_line, end_pos[2] + 2)
 
+        replacement_lines = sorted_lines
         if string.match(before_text, '%S') then
-          lines[1] = before_text .. lines[1]
+          replacement_lines[1] = before_text .. replacement_lines[1]
         end
         if string.match(after_text, '%S') then
-          lines[#lines] = lines[#lines] .. after_text
+          replacement_lines[#replacement_lines] = replacement_lines[#replacement_lines]
+            .. after_text
         end
-
-        replacement_lines = lines
       end
 
       vim.api.nvim_buf_set_lines(
@@ -194,30 +172,17 @@ local function set_text_for_motion(
         or ''
       local line_len = string.len(current_line)
 
-      if is_visual_marks then
-        -- Visual marks are 0-based, nvim_buf_set_text expects 0-based.
-        -- Add 1 to end_col to make selection inclusive, but clamp to line length.
-        local end_col_clamped = math.min(end_col + 1, line_len)
-        vim.api.nvim_buf_set_text(
-          0,
-          row - 1,
-          start_col,
-          row - 1,
-          end_col_clamped,
-          { line }
-        )
-      else
-        -- Operator marks are 0-based, nvim_buf_set_text expects 0-based.
-        local end_col_clamped = math.min(end_col + 1, line_len)
-        vim.api.nvim_buf_set_text(
-          0,
-          row - 1,
-          start_col,
-          row - 1,
-          end_col_clamped,
-          { line }
-        )
-      end
+      -- Both visual marks and operator marks are 0-based, nvim_buf_set_text expects 0-based.
+      -- Add 1 to end_col to make selection inclusive, but clamp to line length.
+      local end_col_clamped = math.min(end_col + 1, line_len)
+      vim.api.nvim_buf_set_text(
+        0,
+        row - 1,
+        start_col,
+        row - 1,
+        end_col_clamped,
+        { line }
+      )
     end
   end
 end
@@ -338,6 +303,7 @@ M.sort_operator = function(motion_type, from_visual)
   local config = require('sort.config')
   local user_config = config.get_user_config()
   options.natural = user_config.natural_sort
+  options.ignore_case = user_config.ignore_case
 
   local sorted_text
   local lines = vim.split(text, '\n')
@@ -384,8 +350,15 @@ end
 
 -- Make the function globally accessible for operatorfunc.
 -- vim's operatorfunc only passes motion_type, so we need a wrapper.
-_G._sort_operator = function(motion_type)
+-- Make the function globally accessible for operatorfunc.
+-- vim's operatorfunc only passes motion_type, so we need a wrapper.
+local function sort_operator_wrapper(motion_type)
   return M.sort_operator(motion_type, false) -- false = not from visual mode
 end
+
+-- Export the wrapper for global access
+M.sort_operator_wrapper = sort_operator_wrapper
+-- selene: allow(global_usage)
+_G._sort_operator = sort_operator_wrapper
 
 return M

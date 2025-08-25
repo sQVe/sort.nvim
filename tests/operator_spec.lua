@@ -1,6 +1,5 @@
 describe('operator functionality', function()
   local operator = require('sort.operator')
-  local utils = require('sort.utils')
 
   -- Helper function to set up a test buffer.
   local function setup_buffer(content)
@@ -608,14 +607,14 @@ describe('operator functionality', function()
       config.setup({ natural_sort = false })
 
       -- Reload operator module to pick up new config.
-      local operator = require('sort.operator')
+      local operator_module = require('sort.operator')
 
       setup_buffer('item10,item2,item1')
 
       -- Simulate go$ - from position 1 to end of line.
       set_operator_marks(1, 1, 1, 18)
 
-      operator.sort_operator('char')
+      operator_module.sort_operator('char')
 
       local result = get_buffer_content()
       -- Lexicographic sorting should give item1,item10,item2.

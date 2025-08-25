@@ -289,13 +289,13 @@ describe('integration functionality', function()
       sort.setup({ natural_sort = false })
 
       -- Reload operator module to pick up new config.
-      local operator = require('sort.operator')
+      local operator_module = require('sort.operator')
 
       setup_buffer('item10,item2,item1,item20')
 
       -- Simulate go$ - operator motion from start to end.
       set_operator_marks(1, 1, 1, 25)
-      operator.sort_operator('char')
+      operator_module.sort_operator('char')
 
       local result = get_buffer_content()
       -- Lexicographic sorting should give item1,item10,item2,item20.

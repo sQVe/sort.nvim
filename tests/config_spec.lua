@@ -15,6 +15,7 @@ describe('config', function()
         delimiters = { ',', '|', ';', ':', 's', 't' },
         keymap = 'go',
         natural_sort = true,
+        ignore_case = false,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -41,6 +42,7 @@ describe('config', function()
         delimiters = { ',', '|', ';', ':', 's', 't' },
         keymap = 'go',
         natural_sort = true,
+        ignore_case = false,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -66,6 +68,7 @@ describe('config', function()
         delimiters = { ',', '|', ';', ':', 's', 't' },
         keymap = 'gS',
         natural_sort = true,
+        ignore_case = false,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -102,6 +105,7 @@ describe('config', function()
         delimiters = { ',', '|', ';', ':', 's', 't' },
         keymap = 'go',
         natural_sort = true,
+        ignore_case = false,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -145,7 +149,7 @@ describe('config', function()
       local overrides = {
         delimiters = { '|', ',', ';', ':', 's', 't' },
       }
-      local user_config = config.setup(overrides)
+      config.setup(overrides)
       local sort = require('sort.sort')
 
       -- Test that pipe takes priority over comma with custom order.

@@ -67,8 +67,8 @@ M.get_visual_selection = function()
     return nil
   end
 
-  local _, from_row, from_column, _ = (table.unpack or unpack)(start_pos)
-  local _, to_row, end_column, _ = (table.unpack or unpack)(end_pos)
+  local _, from_row, from_column, _ = unpack(start_pos)
+  local _, to_row, end_column, _ = unpack(end_pos)
 
   if from_row == 0 or to_row == 0 then
     vim.notify('No valid visual selection found', vim.log.levels.ERROR)
