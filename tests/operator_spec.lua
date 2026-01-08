@@ -739,6 +739,32 @@ describe('operator functionality', function()
       assert.are.equal("  'item3'", result[4])
       assert.are.equal('}', result[5])
     end)
+
+    it(
+      'should treat indented multi-line text objects as line motions',
+      function()
+        setup_buffer({
+          'list = {',
+          '  zebra,',
+          '  apple,',
+          '  banana,',
+          '}',
+        })
+
+        -- Simulate indent text object selection: start at first non-whitespace,
+        -- end before trailing comma on last line.
+        set_operator_marks(2, 3, 4, 8)
+
+        operator.sort_operator('char')
+
+        local result = get_buffer_content()
+        assert.are.equal('list = {', result[1])
+        assert.are.equal('  apple,', result[2])
+        assert.are.equal('  banana,', result[3])
+        assert.are.equal('  zebra,', result[4])
+        assert.are.equal('}', result[5])
+      end
+    )
   end)
 
   describe('partial line character motions', function()

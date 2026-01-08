@@ -269,18 +269,29 @@ M.sort_operator = function(motion_type, from_visual)
       vim.api.nvim_buf_get_lines(0, end_pos[1] - 1, end_pos[1], false)[1]
 
     if first_line and last_line then
-      -- Check if selection starts at beginning of first line.
+      -- Check if selection starts at beginning of first line (or only whitespace before).
+      local before_selection = string.sub(first_line, 1, start_pos[2])
       local starts_at_line_beginning = start_pos[2] == 0
-        or (
-          start_pos[2] > 0
-          and string.match(string.sub(first_line, 1, start_pos[2]), '^%s*$')
-        )
+        or string.match(before_selection, '^%s*$')
 
       -- Check if selection ends at or near end of last line.
+      -- Also consider it "end of line" if only whitespace and structural punctuation remain.
+      local after_selection = string.sub(last_line, end_pos[2] + 2)
       local ends_at_line_end = end_pos[2] >= string.len(last_line) - 1
+        or string.match(after_selection, '^[%s,;%]%)%}]*$')
+
+      -- For selections spanning 3+ lines, be more lenient - treat as line motion
+      -- if at least one boundary looks like a line boundary. This handles text
+      -- objects like `ii` (inside indent) that may not start at column 0 but
+      -- still represent a logical line selection.
+      local spans_many_lines = (end_pos[1] - start_pos[1]) >= 2
 
       if starts_at_line_beginning and ends_at_line_end then
         -- This is a "perfect lines" selection - convert to line motion.
+        effective_motion_type = 'line'
+      elseif spans_many_lines and (starts_at_line_beginning or ends_at_line_end) then
+        -- For multi-line text objects that look like they cover mostly complete lines,
+        -- treat as line motion to avoid corruption from partial line handling.
         effective_motion_type = 'line'
       end
     end
