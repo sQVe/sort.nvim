@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-01-08
+
+### Fixed
+
+- Improved line motion detection for multi-line text objects. Fixes edge cases where character motions with text objects (e.g., `goi{`) spanning multiple lines were not correctly detected as line-wise operations (#15).
+
 ## [2.2.0] - 2025-08-25
 
 ### Added
@@ -104,7 +110,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keybinding examples with detailed explanations.
 - Documentation for numerical sorting options.
 
-[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/sQVe/sort.nvim/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/sQVe/sort.nvim/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/sQVe/sort.nvim/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/sQVe/sort.nvim/compare/v2.1.0...v2.1.1
