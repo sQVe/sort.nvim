@@ -286,12 +286,14 @@ M.sort_operator = function(motion_type, from_visual)
       -- still represent a logical line selection.
       local spans_many_lines = (end_pos[1] - start_pos[1]) >= 2
 
-      if starts_at_line_beginning and ends_at_line_end then
-        -- This is a "perfect lines" selection - convert to line motion.
-        effective_motion_type = 'line'
-      elseif spans_many_lines and (starts_at_line_beginning or ends_at_line_end) then
-        -- For multi-line text objects that look like they cover mostly complete lines,
-        -- treat as line motion to avoid corruption from partial line handling.
+      -- Treat as line motion if:
+      -- 1. "Perfect lines" selection (starts at beginning, ends at line end)
+      -- 2. Multi-line text objects that cover mostly complete lines
+      local is_perfect_lines = starts_at_line_beginning and ends_at_line_end
+      local is_multiline_block = spans_many_lines
+        and (starts_at_line_beginning or ends_at_line_end)
+
+      if is_perfect_lines or is_multiline_block then
         effective_motion_type = 'line'
       end
     end
