@@ -275,10 +275,10 @@ M.sort_operator = function(motion_type, from_visual)
         or string.match(before_selection, '^%s*$')
 
       -- Check if selection ends at or near end of last line.
-      -- Also consider it "end of line" if only whitespace/punctuation remains.
+      -- Also consider it "end of line" if only whitespace and structural punctuation remain.
       local after_selection = string.sub(last_line, end_pos[2] + 2)
       local ends_at_line_end = end_pos[2] >= string.len(last_line) - 1
-        or string.match(after_selection, '^[%s%p]*$')
+        or string.match(after_selection, '^[%s,;%]%)%}]*$')
 
       -- For selections spanning 3+ lines, be more lenient - treat as line motion
       -- if at least one boundary looks like a line boundary. This handles text
