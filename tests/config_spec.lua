@@ -16,6 +16,7 @@ describe('config', function()
         keymap = 'go',
         natural_sort = true,
         ignore_case = false,
+        unique = false,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -43,6 +44,7 @@ describe('config', function()
         keymap = 'go',
         natural_sort = true,
         ignore_case = false,
+        unique = false,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -69,6 +71,7 @@ describe('config', function()
         keymap = 'gS',
         natural_sort = true,
         ignore_case = false,
+        unique = false,
         whitespace = {
           alignment_threshold = 3,
         },
@@ -106,6 +109,7 @@ describe('config', function()
         keymap = 'go',
         natural_sort = true,
         ignore_case = false,
+        unique = false,
         whitespace = {
           alignment_threshold = 3,
         },

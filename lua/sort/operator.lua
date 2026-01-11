@@ -317,6 +317,7 @@ M.sort_operator = function(motion_type, from_visual)
   local user_config = config.get_user_config()
   options.natural = user_config.natural_sort
   options.ignore_case = user_config.ignore_case
+  options.unique = user_config.unique
 
   local sorted_text
   local lines = vim.split(text, '\n')

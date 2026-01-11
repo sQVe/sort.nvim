@@ -49,6 +49,9 @@
   -- Case-insensitive sorting (default: false).
   ignore_case = false,
 
+  -- Remove duplicate items when sorting (default: false).
+  unique = false,
+
   -- Whitespace alignment threshold.
   whitespace = {
     alignment_threshold = 3,
@@ -152,6 +155,16 @@ require('sort').setup({
 ```
 
 **Note**: The `:Sort i` command still works independently of this setting for explicit case-insensitive sorting.
+
+### Unique sorting (removing duplicates)
+
+To remove duplicates when sorting:
+
+```lua
+require('sort').setup({
+  unique = true,
+})
+```
 
 ### Customizing mappings
 

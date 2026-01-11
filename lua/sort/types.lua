@@ -4,6 +4,7 @@
 --- @field public mappings table
 --- @field public natural_sort boolean
 --- @field public ignore_case boolean
+--- @field public unique boolean
 
 --- @class SelectionFragment
 --- @field public row integer
