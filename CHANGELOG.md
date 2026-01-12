@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-01-12
+
+### Added
+
+- Added `unique` configuration option to remove duplicate items when sorting. When enabled, duplicate entries are removed during both line and delimiter sorting (#16).
+
 ## [2.2.1] - 2026-01-08
 
 ### Fixed
@@ -110,7 +116,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keybinding examples with detailed explanations.
 - Documentation for numerical sorting options.
 
-[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/sQVe/sort.nvim/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/sQVe/sort.nvim/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/sQVe/sort.nvim/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/sQVe/sort.nvim/compare/v2.1.1...v2.1.2
