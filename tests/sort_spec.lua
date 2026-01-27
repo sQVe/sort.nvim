@@ -784,7 +784,7 @@ describe('sort', function()
       assert.are.equal('item001,item02,item10,item100', result)
     end)
 
-    it('should handle negative numbers naturally', function()
+    it('should treat dash as separator, not negative sign', function()
       local text = 'item-10,item-2,item-1,item-20'
       local options = {
         delimiter = nil,
@@ -796,7 +796,52 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('item-20,item-10,item-2,item-1', result)
+      assert.are.equal('item-1,item-2,item-10,item-20', result)
+    end)
+
+    it('should sort date-like patterns naturally', function()
+      local text = 'file-2025-11-10,file-2025-11-2'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('file-2025-11-2,file-2025-11-10', result)
+    end)
+
+    it('should sort multi-dash patterns naturally', function()
+      local text = 'error-log-10,error-log-2,error-log-5'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('error-log-2,error-log-5,error-log-10', result)
+    end)
+
+    it('should sort compound identifiers naturally', function()
+      local text = 'sensor-5-reading-20,sensor-5-reading-10'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('sensor-5-reading-10,sensor-5-reading-20', result)
     end)
 
     it('should handle decimal numbers naturally', function()

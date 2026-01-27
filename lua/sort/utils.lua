@@ -306,25 +306,6 @@ end
 --- @param ignore_case boolean Whether to ignore case
 --- @return boolean True if a should come before b
 M.natural_compare = function(a, b, ignore_case)
-  -- Special case: detect negative number pattern.
-  -- If both strings have the pattern "prefix-number" where prefix is the same.
-  -- treat the numbers as negative for comparison.
-  local prefix_a, num_a = string.match(a, '^(.-)%-(%d+)$')
-  local prefix_b, num_b = string.match(b, '^(.-)%-(%d+)$')
-
-  if prefix_a and num_a and prefix_b and num_b then
-    local cmp_prefix_a = ignore_case and string.lower(prefix_a) or prefix_a
-    local cmp_prefix_b = ignore_case and string.lower(prefix_b) or prefix_b
-    if cmp_prefix_a == cmp_prefix_b then
-      -- Both have the same prefix followed by minus and number.
-      -- Compare as negative numbers.
-      local neg_a = -tonumber(num_a)
-      local neg_b = -tonumber(num_b)
-      return neg_a < neg_b
-    end
-  end
-
-  -- Standard natural sorting.
   local segments_a = M.parse_natural_segments(a)
   local segments_b = M.parse_natural_segments(b)
 
