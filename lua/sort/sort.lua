@@ -12,7 +12,12 @@ local M = {}
 local function compare_strings(a, b, options)
   -- Use natural sorting if enabled.
   if options.natural then
-    return utils.natural_compare(a, b, options.ignore_case)
+    return utils.natural_compare(
+      a,
+      b,
+      options.ignore_case,
+      options.ignore_negative
+    )
   end
 
   local sort_a = options.ignore_case and string.lower(a) or a
@@ -331,6 +336,8 @@ M.line_sort = function(bang, arguments)
   -- Apply config defaults if not explicitly set by arguments
   local user_config = config.get_user_config()
   options.ignore_case = options.ignore_case or user_config.ignore_case
+  options.ignore_negative = options.ignore_negative
+    or user_config.ignore_negative
 
   local success, lines = pcall(
     vim.api.nvim_buf_get_lines,

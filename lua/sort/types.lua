@@ -4,6 +4,7 @@
 --- @field public mappings table
 --- @field public natural_sort boolean
 --- @field public ignore_case boolean
+--- @field public ignore_negative boolean
 --- @field public unique boolean
 
 --- @class SelectionFragment
@@ -17,6 +18,7 @@
 --- @class SortOptions
 --- @field public delimiter? string
 --- @field public ignore_case boolean
+--- @field public ignore_negative boolean
 --- @field public numerical? integer
 --- @field public reverse boolean
 --- @field public unique boolean

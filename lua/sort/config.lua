@@ -6,6 +6,7 @@ local defaults = {
   keymap = 'go',
   natural_sort = true,
   ignore_case = false,
+  ignore_negative = false,
   unique = false,
   whitespace = {
     alignment_threshold = 3,

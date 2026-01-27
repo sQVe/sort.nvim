@@ -16,6 +16,7 @@ describe('config', function()
         keymap = 'go',
         natural_sort = true,
         ignore_case = false,
+        ignore_negative = false,
         unique = false,
         whitespace = {
           alignment_threshold = 3,
@@ -44,6 +45,7 @@ describe('config', function()
         keymap = 'go',
         natural_sort = true,
         ignore_case = false,
+        ignore_negative = false,
         unique = false,
         whitespace = {
           alignment_threshold = 3,
@@ -71,6 +73,7 @@ describe('config', function()
         keymap = 'gS',
         natural_sort = true,
         ignore_case = false,
+        ignore_negative = false,
         unique = false,
         whitespace = {
           alignment_threshold = 3,
@@ -109,6 +112,7 @@ describe('config', function()
         keymap = 'go',
         natural_sort = true,
         ignore_case = false,
+        ignore_negative = false,
         unique = false,
         whitespace = {
           alignment_threshold = 3,
@@ -184,6 +188,14 @@ describe('config', function()
       local user_config = config.setup(overrides)
 
       assert.are.equal(true, user_config.natural_sort)
+    end)
+
+    it('should ignore_negative when set to true', function()
+      local overrides = { ignore_negative = true }
+      local user_config = config.setup(overrides)
+
+      assert.are.equal(true, user_config.ignore_negative)
+      assert.are.equal('go', user_config.keymap) -- Other defaults should remain
     end)
   end)
 end)

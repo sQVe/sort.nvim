@@ -49,6 +49,9 @@
   -- Case-insensitive sorting (default: false).
   ignore_case = false,
 
+  -- Treat '-' (minus) as punctuation, not as part of negative number (default: false).
+  ignore_negative = false,
+
   -- Remove duplicate items when sorting (default: false).
   unique = false,
 
@@ -102,6 +105,7 @@ When selecting within a single line, the plugin performs delimiter-based sorting
 - `[delimiter]` - Manually specify delimiter (any punctuation, `s` for space, `t` for tab)
 - `b` - Sort by binary numbers
 - `i` - Ignore case
+- `g` - Ignore negative numbers
 - `n` - Sort by decimal numbers
 - `o` - Sort by octal numbers
 - `u` - Keep only unique items
@@ -155,6 +159,20 @@ require('sort').setup({
 ```
 
 **Note**: The `:Sort i` command still works independently of this setting for explicit case-insensitive sorting.
+
+### Skip negative number detection
+
+By default, **Sort** detects negative numbers (at the end of strings, in `prefix-number` pattern) and sorts them numerically (so `-10` is lower/before `-2`).
+In some cases the dash/minus character is used as separator and not as part of negative number (`2026-1-2` and `2026-1-10`).
+For such cases You can configure it to skip negative number detection:
+
+```lua
+require('sort').setup({
+  ignore_negative = true,
+})
+```
+
+**Note**: The `:Sort g` command still works independently of this setting for explicitly skipping negative number detection.
 
 ### Unique sorting (removing duplicates)
 

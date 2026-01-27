@@ -1512,4 +1512,38 @@ describe('sort', function()
       )
     end)
   end)
+  describe('natural sorting ignoring negative numbers', function()
+    -- Decimal with minus prefix at end is treated as negative number
+    -- and so -10 comes before -2
+    -- while when '-' is treated as punctuation, 2 should be before 10
+    it('sort respecting negative numbers', function()
+      local text = 'file-2026-10\nfile-2025-10\nfile-2025-2\nfile-2026-2'
+      local options = {
+        ignore_negative = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      -- expect -10 before -2
+      assert.are.equal(
+        'file-2025-10\nfile-2025-2\nfile-2026-10\nfile-2026-2',
+        result
+      )
+    end)
+
+    it('sort while ignoring negative numbers', function()
+      local text = 'file-2026-10\nfile-2025-10\nfile-2025-2\nfile-2026-2'
+      local options = {
+        ignore_negative = true,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      -- expect -2 before -10
+      assert.are.equal(
+        'file-2025-2\nfile-2025-10\nfile-2026-2\nfile-2026-10',
+        result
+      )
+    end)
+  end)
 end)

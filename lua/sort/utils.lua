@@ -75,6 +75,7 @@ M.parse_arguments = function(bang, arguments)
   end
 
   options.ignore_case = string.match(arguments, 'i') ~= nil
+  options.ignore_negative = string.match(arguments, 'g') ~= nil
   options.reverse = bang == '!'
   options.unique = string.match(arguments, 'u') ~= nil
   options.natural = string.match(arguments, 'z') ~= nil
@@ -304,23 +305,26 @@ end
 --- @param a string First string to compare
 --- @param b string Second string to compare
 --- @param ignore_case boolean Whether to ignore case
+--- @param ignore_negative boolean Whether to ignore possibility of negative numbers (treat '-' as punctuation)
 --- @return boolean True if a should come before b
-M.natural_compare = function(a, b, ignore_case)
+M.natural_compare = function(a, b, ignore_case, ignore_negative)
   -- Special case: detect negative number pattern.
   -- If both strings have the pattern "prefix-number" where prefix is the same.
   -- treat the numbers as negative for comparison.
-  local prefix_a, num_a = string.match(a, '^(.-)%-(%d+)$')
-  local prefix_b, num_b = string.match(b, '^(.-)%-(%d+)$')
+  if not ignore_negative then
+    local prefix_a, num_a = string.match(a, '^(.-)%-(%d+)$')
+    local prefix_b, num_b = string.match(b, '^(.-)%-(%d+)$')
 
-  if prefix_a and num_a and prefix_b and num_b then
-    local cmp_prefix_a = ignore_case and string.lower(prefix_a) or prefix_a
-    local cmp_prefix_b = ignore_case and string.lower(prefix_b) or prefix_b
-    if cmp_prefix_a == cmp_prefix_b then
-      -- Both have the same prefix followed by minus and number.
-      -- Compare as negative numbers.
-      local neg_a = -tonumber(num_a)
-      local neg_b = -tonumber(num_b)
-      return neg_a < neg_b
+    if prefix_a and num_a and prefix_b and num_b then
+      local cmp_prefix_a = ignore_case and string.lower(prefix_a) or prefix_a
+      local cmp_prefix_b = ignore_case and string.lower(prefix_b) or prefix_b
+      if cmp_prefix_a == cmp_prefix_b then
+        -- Both have the same prefix followed by minus and number.
+        -- Compare as negative numbers.
+        local neg_a = -tonumber(num_a)
+        local neg_b = -tonumber(num_b)
+        return neg_a < neg_b
+      end
     end
   end
 
