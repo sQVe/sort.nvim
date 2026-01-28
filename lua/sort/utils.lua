@@ -354,4 +354,45 @@ M.normalize_whitespace = function(
   return dominant_pattern
 end
 
+--- Rejects '.5', accepts '0.5' and '5.'.
+--- @param str string
+--- @return boolean
+M.is_pure_number = function(str)
+  if str == nil or str == '' then
+    return false
+  end
+  local has_basic_number = string.match(str, '^[%+%-]?%d+%.?%d*$') ~= nil
+  local has_scientific = string.match(str, '^[%+%-]?%d+%.?%d*[eE][%+%-]?%d+$')
+    ~= nil
+  return (has_basic_number or has_scientific) and tonumber(str) ~= nil
+end
+
+--- Check if all non-empty items in a list are pure numbers.
+--- Returns true for empty arrays or arrays with only empty trimmed values.
+--- This triggers mathematical sorting for pure number lists and empty segments.
+--- @param items table[] Array of items with trimmed field
+--- @return boolean
+M.all_pure_numbers = function(items)
+  for _, item in ipairs(items) do
+    if item.trimmed ~= '' and not M.is_pure_number(item.trimmed) then
+      return false
+    end
+  end
+  return true
+end
+
+--- Falls back to string comparison if tonumber fails (should not occur when
+--- called via the sorting pipeline which pre-validates with all_pure_numbers).
+--- @param a string
+--- @param b string
+--- @return boolean
+M.math_compare = function(a, b)
+  local na = a == '' and 0 or tonumber(a)
+  local nb = b == '' and 0 or tonumber(b)
+  if na and nb then
+    return na < nb
+  end
+  return a < b
+end
+
 return M

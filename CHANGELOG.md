@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Mathematical sorting for pure numeric lists. When natural sort is enabled and all items are numbers (integers, decimals, scientific notation), sorting uses numeric comparison. `-90, -10, 5` now sorts correctly instead of lexicographically.
+
 ### Fixed
 
 - Natural sorting now treats dashes as separators, not negative signs. `item-10, item-2` sorts as `item-2, item-10` instead of reversed (#18).
