@@ -8,8 +8,13 @@ local M = {}
 --- @param a string
 --- @param b string
 --- @param options SortOptions
+--- @param use_math_sort? boolean
 --- @return boolean
-local function compare_strings(a, b, options)
+local function compare_strings(a, b, options, use_math_sort)
+  if use_math_sort then
+    return utils.math_compare(a, b)
+  end
+
   -- Use natural sorting if enabled.
   if options.natural then
     return utils.natural_compare(a, b, options.ignore_case)
@@ -129,12 +134,14 @@ M.delimiter_sort = function(text, options)
     original_order[i] = item.original_position
   end
 
+  local use_math_sort = options.natural and utils.all_pure_numbers(items)
+
   -- Sort items by their trimmed content.
   table.sort(items, function(a, b)
     if options.reverse then
-      return compare_strings(b.trimmed, a.trimmed, options)
+      return compare_strings(b.trimmed, a.trimmed, options, use_math_sort)
     else
-      return compare_strings(a.trimmed, b.trimmed, options)
+      return compare_strings(a.trimmed, b.trimmed, options, use_math_sort)
     end
   end)
 
@@ -302,12 +309,15 @@ M.line_sort_text = function(text, options)
     items_to_sort = line_items
   end
 
+  local use_math_sort = options.natural
+    and utils.all_pure_numbers(items_to_sort)
+
   -- Sort lines using the same comparison logic as delimiter sorting but on trimmed content.
   table.sort(items_to_sort, function(a, b)
     if options.reverse then
-      return compare_strings(b.trimmed, a.trimmed, options)
+      return compare_strings(b.trimmed, a.trimmed, options, use_math_sort)
     else
-      return compare_strings(a.trimmed, b.trimmed, options)
+      return compare_strings(a.trimmed, b.trimmed, options, use_math_sort)
     end
   end)
 

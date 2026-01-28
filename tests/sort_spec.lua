@@ -1226,6 +1226,334 @@ describe('sort', function()
     )
   end)
 
+  describe('mathematical sorting for pure numbers', function()
+    it('should sort pure negative integers mathematically', function()
+      local text = '-10,-7,-90,-1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-90,-10,-7,-1', result)
+    end)
+
+    it(
+      'should sort mixed positive and negative integers mathematically',
+      function()
+        local text = '90,-1,7,3,-80'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+          natural = true,
+        }
+
+        local result = sort.delimiter_sort(text, options)
+        assert.are.equal('-80,-1,3,7,90', result)
+      end
+    )
+
+    it('should sort decimal numbers mathematically', function()
+      local text = '-10.5,3.14,-2.7,0.5'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-10.5,-2.7,0.5,3.14', result)
+    end)
+
+    it('should sort numbers with positive sign mathematically', function()
+      local text = '+10,-5,+3,-8'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-8,-5,+3,+10', result)
+    end)
+
+    it('should sort scientific notation mathematically', function()
+      local text = '1e5,-1e3,2e4'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-1e3,2e4,1e5', result)
+    end)
+
+    it('should handle whitespace around numbers', function()
+      local text = ' -10 , -90 , 5 '
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal(' -90 , -10 , 5 ', result)
+    end)
+
+    it('should skip empty segments in detection', function()
+      local text = '-10,,-90,5'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-90,-10,,5', result)
+    end)
+
+    it('should reverse mathematical sort correctly', function()
+      local text = '-10,-90,-1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = true,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-1,-10,-90', result)
+    end)
+
+    it('should deduplicate with mathematical sort', function()
+      local text = '-10,-90,-1,-10'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = true,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-90,-10,-1', result)
+    end)
+
+    it('should handle zero with negative numbers', function()
+      local text = '-10,0,-90,10'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-90,-10,0,10', result)
+    end)
+
+    it('should sort mixed content naturally (not mathematically)', function()
+      local text = '-10,item-10,item-12,-90'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-10,-90,item-10,item-12', result)
+    end)
+
+    it('should preserve identifier sorting in mixed lists', function()
+      local text = '-5,item-10,item-2'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-5,item-2,item-10', result)
+    end)
+
+    it('should not use math sort when natural is false', function()
+      local text = '-10,-90,-1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-1,-10,-90', result)
+    end)
+
+    it('should handle empty segments as 0 in math sort', function()
+      local text = '-10,,-5,10'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-10,-5,,10', result)
+    end)
+  end)
+
+  describe('mathematical sorting for lines', function()
+    it('should sort lines with negative numbers mathematically', function()
+      local text = '-10\n-7\n-90\n-1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('-90\n-10\n-7\n-1', result)
+    end)
+
+    it('should reverse line sort with negative numbers', function()
+      local text = '-10\n-90\n-1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = true,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('-1\n-10\n-90', result)
+    end)
+
+    it(
+      'should sort mixed positive and negative lines mathematically',
+      function()
+        local text = '10\n-5\n0\n-20\n15'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+          natural = true,
+        }
+
+        local result = sort.line_sort_text(text, options)
+        assert.are.equal('-20\n-5\n0\n10\n15', result)
+      end
+    )
+
+    it('should sort decimal number lines mathematically', function()
+      local text = '3.14\n-2.5\n0.1\n-10.5'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('-10.5\n-2.5\n0.1\n3.14', result)
+    end)
+
+    it(
+      'should sort mixed content lines naturally (not mathematically)',
+      function()
+        local text = '-10\nitem-10\n-90\nitem-2'
+        local options = {
+          delimiter = nil,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+          natural = true,
+        }
+
+        local result = sort.line_sort_text(text, options)
+        assert.are.equal('-10\n-90\nitem-2\nitem-10', result)
+      end
+    )
+
+    it('should not use math sort when natural is false for lines', function()
+      local text = '-10\n-90\n-1'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = false,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('-1\n-10\n-90', result)
+    end)
+
+    it('should handle empty lines as 0 in math sort', function()
+      local text = '-10\n\n-5\n10'
+      local options = {
+        delimiter = nil,
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.line_sort_text(text, options)
+      assert.are.equal('-10\n-5\n\n10', result)
+    end)
+  end)
+
   describe('natural sorting Intl.Collator compatibility', function()
     it('should interleave numbers and text naturally', function()
       local text = 'text,10,apple,2,banana,1'

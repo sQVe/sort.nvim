@@ -569,6 +569,216 @@ describe('utils', function()
     end)
   end)
 
+  describe('is_pure_number', function()
+    it('should return true for positive integer', function()
+      assert.is_true(utils.is_pure_number('42'))
+    end)
+
+    it('should return true for negative integer', function()
+      assert.is_true(utils.is_pure_number('-42'))
+    end)
+
+    it('should return true for positive decimal', function()
+      assert.is_true(utils.is_pure_number('3.14'))
+    end)
+
+    it('should return true for negative decimal', function()
+      assert.is_true(utils.is_pure_number('-10.5'))
+    end)
+
+    it('should return true for number with positive sign', function()
+      assert.is_true(utils.is_pure_number('+10'))
+    end)
+
+    it('should return true for scientific notation', function()
+      assert.is_true(utils.is_pure_number('1e5'))
+    end)
+
+    it('should return true for negative scientific notation', function()
+      assert.is_true(utils.is_pure_number('-1.5e-10'))
+    end)
+
+    it('should return true for zero', function()
+      assert.is_true(utils.is_pure_number('0'))
+    end)
+
+    it('should return true for negative zero', function()
+      assert.is_true(utils.is_pure_number('-0'))
+    end)
+
+    it('should return false for empty string', function()
+      assert.is_false(utils.is_pure_number(''))
+    end)
+
+    it('should return false for nil', function()
+      assert.is_false(utils.is_pure_number(nil))
+    end)
+
+    it('should return false for text', function()
+      assert.is_false(utils.is_pure_number('abc'))
+    end)
+
+    it('should return false for mixed content', function()
+      assert.is_false(utils.is_pure_number('item10'))
+    end)
+
+    it('should return false for number with text suffix', function()
+      assert.is_false(utils.is_pure_number('10px'))
+    end)
+
+    it('should return false for multiple decimal points', function()
+      assert.is_false(utils.is_pure_number('1.2.3'))
+    end)
+
+    it('should return false for standalone sign', function()
+      assert.is_false(utils.is_pure_number('-'))
+    end)
+
+    it('should return false for standalone plus sign', function()
+      assert.is_false(utils.is_pure_number('+'))
+    end)
+
+    it('should return false for incomplete scientific notation', function()
+      assert.is_false(utils.is_pure_number('1e'))
+    end)
+
+    it('should return false for scientific notation without base', function()
+      assert.is_false(utils.is_pure_number('e5'))
+    end)
+
+    it('should return false for decimal point only', function()
+      assert.is_false(utils.is_pure_number('.'))
+    end)
+
+    it('should return false for leading decimal without zero', function()
+      assert.is_false(utils.is_pure_number('.5'))
+    end)
+
+    it('should return true for trailing decimal', function()
+      assert.is_true(utils.is_pure_number('5.'))
+    end)
+
+    it('should return false for whitespace around number', function()
+      assert.is_false(utils.is_pure_number(' 5 '))
+    end)
+  end)
+
+  describe('all_pure_numbers', function()
+    it('should return true for all pure number items', function()
+      local items = {
+        { trimmed = '10' },
+        { trimmed = '-5' },
+        { trimmed = '3.14' },
+      }
+      assert.is_true(utils.all_pure_numbers(items))
+    end)
+
+    it('should return true when empty items are skipped', function()
+      local items = {
+        { trimmed = '10' },
+        { trimmed = '' },
+        { trimmed = '-5' },
+      }
+      assert.is_true(utils.all_pure_numbers(items))
+    end)
+
+    it('should return false when any item is not a number', function()
+      local items = {
+        { trimmed = '10' },
+        { trimmed = 'item' },
+        { trimmed = '-5' },
+      }
+      assert.is_false(utils.all_pure_numbers(items))
+    end)
+
+    it('should return false for mixed identifiers', function()
+      local items = {
+        { trimmed = '-10' },
+        { trimmed = 'item-10' },
+      }
+      assert.is_false(utils.all_pure_numbers(items))
+    end)
+
+    it('should return true for empty array', function()
+      assert.is_true(utils.all_pure_numbers({}))
+    end)
+
+    it('should return true for array with only empty trimmed values', function()
+      local items = {
+        { trimmed = '' },
+        { trimmed = '' },
+      }
+      assert.is_true(utils.all_pure_numbers(items))
+    end)
+
+    it(
+      'should return false immediately when first item is not a number',
+      function()
+        local items = {
+          { trimmed = 'text' },
+          { trimmed = '10' },
+          { trimmed = '20' },
+        }
+        assert.is_false(utils.all_pure_numbers(items))
+      end
+    )
+
+    it('should return false when last item is not a number', function()
+      local items = {
+        { trimmed = '10' },
+        { trimmed = '20' },
+        { trimmed = 'text' },
+      }
+      assert.is_false(utils.all_pure_numbers(items))
+    end)
+  end)
+
+  describe('math_compare', function()
+    it('should compare positive numbers', function()
+      assert.is_true(utils.math_compare('2', '10'))
+    end)
+
+    it('should compare negative numbers', function()
+      assert.is_true(utils.math_compare('-90', '-10'))
+    end)
+
+    it('should compare mixed positive and negative', function()
+      assert.is_true(utils.math_compare('-5', '3'))
+    end)
+
+    it('should compare decimal numbers', function()
+      assert.is_true(utils.math_compare('-10.5', '-2.7'))
+    end)
+
+    it('should return false when first is greater', function()
+      assert.is_false(utils.math_compare('10', '2'))
+    end)
+
+    it('should return false when numbers are equal', function()
+      assert.is_false(utils.math_compare('5', '5'))
+    end)
+
+    it('should fall back to string comparison for invalid numbers', function()
+      assert.is_true(utils.math_compare('abc', 'def'))
+    end)
+
+    it('should treat empty string as 0 when compared with positive', function()
+      assert.is_true(utils.math_compare('', '5'))
+    end)
+
+    it('should treat empty string as 0 when compared with negative', function()
+      assert.is_false(utils.math_compare('', '-5'))
+    end)
+
+    it('should return false when comparing two empty strings', function()
+      assert.is_false(utils.math_compare('', ''))
+    end)
+
+    it('should fall back to string comparison when one is invalid', function()
+      assert.is_true(utils.math_compare('5', 'abc'))
+    end)
+  end)
+
   describe('natural_compare', function()
     it('should return true when a has fewer segments', function()
       local result = utils.natural_compare('a', 'ab', false)
