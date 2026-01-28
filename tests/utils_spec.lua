@@ -58,6 +58,11 @@ describe('utils', function()
       local result = utils.get_trailing_whitespace('hello \t ')
       assert.are.equal(' \t ', result)
     end)
+
+    it('should return empty string for empty input', function()
+      local result = utils.get_trailing_whitespace('')
+      assert.are.equal('', result)
+    end)
   end)
 
   describe('split_by_delimiter', function()
@@ -179,6 +184,11 @@ describe('utils', function()
     it('should use first numerical flag when multiple provided', function()
       local result = utils.parse_arguments('', 'bx')
       assert.are.equal(2, result.numerical)
+    end)
+
+    it('should set delimiter to nil when no delimiter provided', function()
+      local result = utils.parse_arguments('', 'iuz')
+      assert.is_nil(result.delimiter)
     end)
   end)
 
@@ -462,6 +472,19 @@ describe('utils', function()
       assert.are.equal('caf', result[1].text)
       assert.are.equal(false, result[1].is_number)
       assert.are.equal(false, result[1].is_punctuation)
+      assert.are.equal(true, result[2].is_punctuation)
+      assert.are.equal(true, result[3].is_punctuation)
+    end)
+
+    it('should treat whitespace as punctuation', function()
+      local result = utils.parse_natural_segments('hello world')
+      assert.are.equal(3, #result)
+      assert.are.equal('hello', result[1].text)
+      assert.are.equal(false, result[1].is_punctuation)
+      assert.are.equal(' ', result[2].text)
+      assert.are.equal(true, result[2].is_punctuation)
+      assert.are.equal('world', result[3].text)
+      assert.are.equal(false, result[3].is_punctuation)
     end)
   end)
 
@@ -534,6 +557,13 @@ describe('utils', function()
     it('should compare two punctuation characters by string value', function()
       local seg_a = { text = '-', is_number = false, is_punctuation = true }
       local seg_b = { text = '.', is_number = false, is_punctuation = true }
+      local result = utils.compare_natural_segments(seg_a, seg_b, false)
+      assert.are.equal(-1, result)
+    end)
+
+    it('should compare number segment with text segment as strings', function()
+      local seg_a = { text = '2', is_number = true, is_punctuation = false }
+      local seg_b = { text = 'abc', is_number = false, is_punctuation = false }
       local result = utils.compare_natural_segments(seg_a, seg_b, false)
       assert.are.equal(-1, result)
     end)
