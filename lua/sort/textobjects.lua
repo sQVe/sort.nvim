@@ -6,7 +6,7 @@ local M = {}
 --- Find the boundaries of a sortable region around the cursor.
 --- @param include_delimiters boolean Whether to include surrounding delimiters
 --- @return table|nil selection Selection object or nil if no sortable region found
-local function find_sortable_region(include_delimiters)
+M._find_sortable_region = function(include_delimiters)
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]
   local col = cursor_pos[2] + 1 -- Convert to 1-based indexing
@@ -40,23 +40,42 @@ local function find_sortable_region(include_delimiters)
     return nil
   end
 
-  -- Find which segment the cursor is in.
+  -- Compute every segment's [start, finish] up front so we can snap deterministically
+  -- when the cursor sits on a delimiter or past the last segment.
+  local segments = {}
   local current_pos = 1
-  local segment_start = 1
-  local segment_end = 1
-  local segment_index = 1
-
   for i, match in ipairs(matches) do
-    segment_start = current_pos
-    segment_end = current_pos + string.len(match) - 1
+    segments[i] = {
+      start = current_pos,
+      finish = current_pos + string.len(match) - 1,
+    }
+    current_pos = current_pos + string.len(match) + string.len(best_delimiter)
+  end
 
-    if col >= segment_start and col <= segment_end then
+  local segment_index = nil
+  for i, seg in ipairs(segments) do
+    if col >= seg.start and col <= seg.finish then
       segment_index = i
       break
     end
-
-    current_pos = current_pos + string.len(match) + string.len(best_delimiter)
   end
+
+  if segment_index == nil then
+    -- Cursor on a delimiter or past the last segment. Snap to the segment
+    -- whose end lies immediately before the cursor; fall back to the first.
+    for i = #segments, 1, -1 do
+      if segments[i].finish < col then
+        segment_index = i
+        break
+      end
+    end
+    if segment_index == nil then
+      segment_index = 1
+    end
+  end
+
+  local segment_start = segments[segment_index].start
+  local segment_end = segments[segment_index].finish
 
   -- Determine selection boundaries.
   local selection_start = segment_start
@@ -80,7 +99,7 @@ end
 
 --- Select inner sortable region (without delimiters).
 M.select_inner = function()
-  local selection = find_sortable_region(false)
+  local selection = M._find_sortable_region(false)
 
   if not selection then
     vim.notify('No sortable region found around cursor', vim.log.levels.WARN)
@@ -102,7 +121,7 @@ end
 
 --- Select around sortable region (with delimiters).
 M.select_around = function()
-  local selection = find_sortable_region(true)
+  local selection = M._find_sortable_region(true)
 
   if not selection then
     vim.notify('No sortable region found around cursor', vim.log.levels.WARN)
