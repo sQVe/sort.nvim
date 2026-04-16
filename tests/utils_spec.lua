@@ -457,13 +457,33 @@ describe('utils', function()
       end
     end)
 
-    it('should handle punctuation at start', function()
+    it('should parse leading minus with digits as signed number', function()
       local result = utils.parse_natural_segments('-123')
-      assert.are.equal(2, #result)
-      assert.are.equal('-', result[1].text)
-      assert.are.equal(true, result[1].is_punctuation)
-      assert.are.equal('123', result[2].text)
-      assert.are.equal(true, result[2].is_number)
+      assert.are.equal(1, #result)
+      assert.are.equal('-123', result[1].text)
+      assert.are.equal(true, result[1].is_number)
+      assert.are.equal(false, result[1].is_punctuation)
+    end)
+
+    it(
+      'should keep leading minus as punctuation when not followed by digit',
+      function()
+        local result = utils.parse_natural_segments('-abc')
+        assert.are.equal(2, #result)
+        assert.are.equal('-', result[1].text)
+        assert.are.equal(true, result[1].is_punctuation)
+        assert.are.equal('abc', result[2].text)
+      end
+    )
+
+    it('should treat mid-string dash as separator, not sign', function()
+      local result = utils.parse_natural_segments('a-5')
+      assert.are.equal(3, #result)
+      assert.are.equal('a', result[1].text)
+      assert.are.equal('-', result[2].text)
+      assert.are.equal(true, result[2].is_punctuation)
+      assert.are.equal('5', result[3].text)
+      assert.are.equal(true, result[3].is_number)
     end)
 
     it('should treat non-ASCII bytes as punctuation', function()

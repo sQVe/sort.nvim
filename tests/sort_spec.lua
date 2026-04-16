@@ -758,6 +758,21 @@ describe('sort', function()
   end)
 
   describe('natural sorting', function()
+    it('should sort negative numbers in mixed list numerically', function()
+      local text = '-5,-10,abc'
+      local options = {
+        delimiter = ',',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-10,-5,abc', result)
+    end)
+
     -- Basic natural sorting tests
     it('should sort alphanumeric strings naturally', function()
       local text = 'item10,item2,item1,item20'
@@ -1457,7 +1472,7 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('-10,-90,item-10,item-12', result)
+      assert.are.equal('-90,-10,item-10,item-12', result)
     end)
 
     it('should preserve identifier sorting in mixed lists', function()
@@ -1584,7 +1599,7 @@ describe('sort', function()
         }
 
         local result = sort.line_sort_text(text, options)
-        assert.are.equal('-10\n-90\nitem-2\nitem-10', result)
+        assert.are.equal('-90\n-10\nitem-2\nitem-10', result)
       end
     )
 
