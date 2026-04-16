@@ -204,9 +204,7 @@ M.parse_natural_segments = function(str)
 
   -- Leading '-' before digits is a sign, not a separator. Mid-string '-' keeps
   -- its separator semantics (see "dashes as separators" in natural sort).
-  if
-    str:sub(1, 1) == '-' and string.match(str:sub(2, 2) or '', '%d') ~= nil
-  then
+  if str:sub(1, 1) == '-' and string.match(str:sub(2, 2), '%d') ~= nil then
     local j = 2
     while j <= #str and string.match(str:sub(j, j), '%d') do
       j = j + 1

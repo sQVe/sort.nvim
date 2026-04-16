@@ -69,8 +69,8 @@ M.delimiter_sort = function(text, options)
 
     if #matches > 1 then
       local escaped = vim.pesc(top_translated_delimiter)
-      has_leading_delimiter = string.match(text, '^' .. escaped)
-      has_trailing_delimiter = string.match(text, escaped .. '$')
+      has_leading_delimiter = string.match(text, '^' .. escaped) ~= nil
+      has_trailing_delimiter = string.match(text, escaped .. '$') ~= nil
       break
     end
   end
