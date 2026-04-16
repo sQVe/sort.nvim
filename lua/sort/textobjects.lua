@@ -6,7 +6,7 @@ local M = {}
 --- Find the boundaries of a sortable region around the cursor.
 --- @param include_delimiters boolean Whether to include surrounding delimiters
 --- @return table|nil selection Selection object or nil if no sortable region found
-M._find_sortable_region = function(include_delimiters)
+function M._find_sortable_region(include_delimiters)
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]
   local col = cursor_pos[2] + 1 -- Convert to 1-based indexing
@@ -102,7 +102,7 @@ end
 --- the user into normal mode; set `<`/`>` marks and reselect with `gv` instead.
 --- @param selection table Selection with from/to row and column
 --- @param mode string Mode letter from vim.api.nvim_get_mode().mode
-M._apply_selection = function(selection, mode)
+function M._apply_selection(selection, mode)
   local row = selection.from.row
   local start_col_zero = selection.from.column - 1
   local end_col_zero = selection.to.column - 1
@@ -121,7 +121,7 @@ M._apply_selection = function(selection, mode)
 end
 
 --- Select inner sortable region (without delimiters).
-M.select_inner = function()
+function M.select_inner()
   local selection = M._find_sortable_region(false)
 
   if not selection then
@@ -138,7 +138,7 @@ M.select_inner = function()
 end
 
 --- Select around sortable region (with delimiters).
-M.select_around = function()
+function M.select_around()
   local selection = M._find_sortable_region(true)
 
   if not selection then
