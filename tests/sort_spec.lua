@@ -245,6 +245,43 @@ describe('sort', function()
       assert.are.equal(',,,', result)
     end)
 
+    -- Magic Lua pattern chars as delimiters (must be treated literally).
+    it('should treat magic pattern chars as literal delimiters', function()
+      local cases = {
+        { input = 'c(a(b', delim = '(', expected = 'a(b(c' },
+        { input = 'c)a)b', delim = ')', expected = 'a)b)c' },
+        { input = 'c%a%b', delim = '%', expected = 'a%b%c' },
+        { input = 'c.a.b', delim = '.', expected = 'a.b.c' },
+        { input = 'c+a+b', delim = '+', expected = 'a+b+c' },
+        { input = 'c*a*b', delim = '*', expected = 'a*b*c' },
+        { input = 'c?a?b', delim = '?', expected = 'a?b?c' },
+        { input = 'c^a^b', delim = '^', expected = 'a^b^c' },
+        { input = 'c$a$b', delim = '$', expected = 'a$b$c' },
+        { input = 'c-a-b', delim = '-', expected = 'a-b-c' },
+      }
+      for _, case in ipairs(cases) do
+        local result = sort.delimiter_sort(case.input, {
+          delimiter = case.delim,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        })
+        assert.are.equal(case.expected, result)
+      end
+    end)
+
+    it('should preserve leading/trailing dot delimiter', function()
+      local result = sort.delimiter_sort('.c.a.b.', {
+        delimiter = '.',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      })
+      assert.are.equal('.a.b.c.', result)
+    end)
+
     -- Delimiter translation tests.
     it('should handle tab delimiter translation', function()
       local text = 'cherry\tapple\tbanana'
