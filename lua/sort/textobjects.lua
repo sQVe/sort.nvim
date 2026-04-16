@@ -97,6 +97,29 @@ M._find_sortable_region = function(include_delimiters)
   }
 end
 
+--- Apply a selection using the right mechanism for the given editor mode.
+--- In visual modes (v/V/<C-v>), `normal! v` would toggle visual off and drop
+--- the user into normal mode; set `<`/`>` marks and reselect with `gv` instead.
+--- @param selection table Selection with from/to row and column
+--- @param mode string Mode letter from vim.api.nvim_get_mode().mode
+M._apply_selection = function(selection, mode)
+  local row = selection.from.row
+  local start_col_zero = selection.from.column - 1
+  local end_col_zero = selection.to.column - 1
+
+  local is_visual = mode == 'v' or mode == 'V' or mode == '\22'
+  if is_visual then
+    vim.fn.setpos("'<", { 0, row, selection.from.column, 0 })
+    vim.fn.setpos("'>", { 0, row, selection.to.column, 0 })
+    vim.cmd('normal! gv')
+    return
+  end
+
+  vim.api.nvim_win_set_cursor(0, { row, start_col_zero })
+  vim.cmd('normal! v')
+  vim.api.nvim_win_set_cursor(0, { row, end_col_zero })
+end
+
 --- Select inner sortable region (without delimiters).
 M.select_inner = function()
   local selection = M._find_sortable_region(false)
@@ -111,12 +134,7 @@ M.select_inner = function()
     return
   end
 
-  local start_pos = { selection.from.row, selection.from.column - 1 }
-  local end_pos = { selection.to.row, selection.to.column - 1 }
-
-  vim.api.nvim_win_set_cursor(0, start_pos)
-  vim.cmd('normal! v')
-  vim.api.nvim_win_set_cursor(0, end_pos)
+  M._apply_selection(selection, vim.api.nvim_get_mode().mode)
 end
 
 --- Select around sortable region (with delimiters).
@@ -133,12 +151,7 @@ M.select_around = function()
     return
   end
 
-  local start_pos = { selection.from.row, selection.from.column - 1 }
-  local end_pos = { selection.to.row, selection.to.column - 1 }
-
-  vim.api.nvim_win_set_cursor(0, start_pos)
-  vim.cmd('normal! v')
-  vim.api.nvim_win_set_cursor(0, end_pos)
+  M._apply_selection(selection, vim.api.nvim_get_mode().mode)
 end
 
 return M
