@@ -55,7 +55,35 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal(',,,apple,banana,cherry,', result)
+      assert.are.equal(',apple,banana,cherry,', result)
+    end)
+
+    it('should handle leading delimiter without trailing', function()
+      local text = ',c,a,b'
+      local options = {
+        delimiter = ',',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal(',a,b,c', result)
+    end)
+
+    it('should handle leading and trailing delimiter short case', function()
+      local text = ',c,a,b,'
+      local options = {
+        delimiter = ',',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal(',a,b,c,', result)
     end)
 
     it(
@@ -214,7 +242,7 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal(',,,,,', result)
+      assert.are.equal(',,,', result)
     end)
 
     -- Delimiter translation tests.

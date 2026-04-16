@@ -97,16 +97,17 @@ M.delimiter_sort = function(text, options)
     local trailing_ws = utils.get_trailing_whitespace(match)
     local trimmed = utils.trim_leading_and_trailing_whitespace(match)
 
-    -- Skip structural trailing empty segment when:
-    -- 1. We have a trailing delimiter but no leading delimiter
-    -- 2. This is the last segment and it's empty
-    -- 3. This indicates the empty segment is structural, not content
+    -- Drop structural empty segments at the boundaries: when text begins or
+    -- ends with the delimiter, split yields a sentinel empty we re-prepend
+    -- or re-append below. Keeping it causes duplicate delimiters in output.
+    local is_structural_leading_empty = has_leading_delimiter
+      and i == 1
+      and match == ''
     local is_structural_trailing_empty = has_trailing_delimiter
-      and not has_leading_delimiter
       and i == #matches
       and match == ''
 
-    if not is_structural_trailing_empty then
+    if not is_structural_trailing_empty and not is_structural_leading_empty then
       if trimmed == '' and top_translated_delimiter ~= ' ' then
         -- For other delimiters, preserve whitespace-only segments.
         table.insert(items, {
