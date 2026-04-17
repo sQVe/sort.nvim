@@ -238,6 +238,26 @@ describe('utils', function()
       end
     )
 
+    it(
+      'should warn with a targeted message for s/t combined with flags',
+      function()
+        local notify_calls = {}
+        local original_notify = vim.notify
+        vim.notify = function(msg, level)
+          notify_calls[#notify_calls + 1] = { msg = msg, level = level }
+        end
+
+        utils.parse_arguments('', 'us')
+        vim.notify = original_notify
+
+        assert.is_true(#notify_calls >= 1)
+        assert.is_true(
+          string.find(notify_calls[1].msg, 'standalone', 1, true) ~= nil
+        )
+        assert.is_true(string.find(notify_calls[1].msg, "'s'", 1, true) ~= nil)
+      end
+    )
+
     it('should still allow punctuation delimiter with flag letters', function()
       local result = utils.parse_arguments('', 'u,')
       assert.are.equal(true, result.unique)

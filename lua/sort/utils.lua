@@ -188,6 +188,13 @@ M.parse_arguments = function(bang, arguments)
       options.unique = true
     elseif c == 'z' then
       options.natural = true
+    elseif c == 's' or c == 't' then
+      vim.notify(
+        "sort.nvim: '"
+          .. c
+          .. "' delimiter shortcut must be standalone, not combined with flags",
+        vim.log.levels.WARN
+      )
     elseif string.match(c, '%p') then
       options.delimiter = options.delimiter or c
     else
