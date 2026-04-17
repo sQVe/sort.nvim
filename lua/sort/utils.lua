@@ -21,7 +21,10 @@ M.get_trailing_whitespace = function(text)
   return trailing_whitespace or ''
 end
 
---- Split by translated delimiter.
+--- Split by translated delimiter. Splitting is always literal — quoted
+--- strings (`"a,b",c`) and bracket-protected regions (`(a,b),c`) are not
+--- honored, even when the delimiter appears inside them. See README
+--- "Limitations".
 --- @param text string
 --- @param translated_delimiter string
 --- @return string[] matches

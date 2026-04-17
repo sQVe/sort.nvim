@@ -105,6 +105,25 @@ describe('utils', function()
       local result = utils.split_by_delimiter('a\tb\tc', '\t')
       assert.are.same({ 'a', 'b', 'c' }, result)
     end)
+
+    it(
+      'should split literally through quoted regions (main-8v6: quote-awareness is unsupported)',
+      function()
+        -- The plugin does not implement CSV/quote-aware splitting. Delimiters
+        -- inside quoted strings or brackets are treated as normal delimiters.
+        -- This test locks in the literal behavior so any future change to add
+        -- quote awareness is a conscious, documented decision rather than an
+        -- accidental regression. See README "Limitations".
+        assert.are.same(
+          { '"a', 'b"', 'c' },
+          utils.split_by_delimiter('"a,b",c', ',')
+        )
+        assert.are.same(
+          { '(a', 'b)', 'c' },
+          utils.split_by_delimiter('(a,b),c', ',')
+        )
+      end
+    )
   end)
 
   describe('parse_arguments', function()
