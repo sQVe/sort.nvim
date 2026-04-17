@@ -1,24 +1,119 @@
 local M = {}
 
-local leading_whitespace_pattern = '^%s+'
-local trailing_whitespace_pattern = '%s+$'
+-- UTF-8 byte sequences for Unicode whitespace characters outside Lua's %s class.
+-- Covers Unicode White_Space (excluding ASCII already in %s).
+local unicode_whitespace = {
+  ['\194\160'] = true, -- U+00A0 NBSP
+  ['\225\154\128'] = true, -- U+1680 Ogham space mark
+  ['\226\128\128'] = true, -- U+2000 en quad
+  ['\226\128\129'] = true, -- U+2001 em quad
+  ['\226\128\130'] = true, -- U+2002 en space
+  ['\226\128\131'] = true, -- U+2003 em space
+  ['\226\128\132'] = true, -- U+2004 three-per-em space
+  ['\226\128\133'] = true, -- U+2005 four-per-em space
+  ['\226\128\134'] = true, -- U+2006 six-per-em space
+  ['\226\128\135'] = true, -- U+2007 figure space
+  ['\226\128\136'] = true, -- U+2008 punctuation space
+  ['\226\128\137'] = true, -- U+2009 thin space
+  ['\226\128\138'] = true, -- U+200A hair space
+  ['\226\128\168'] = true, -- U+2028 line separator
+  ['\226\128\169'] = true, -- U+2029 paragraph separator
+  ['\226\128\175'] = true, -- U+202F narrow NBSP
+  ['\226\129\159'] = true, -- U+205F medium math space
+  ['\227\128\128'] = true, -- U+3000 ideographic space
+}
+
+--- Byte length of one whitespace character at position `pos`, or 0 if the
+--- character at `pos` is not whitespace.
+--- @param text string
+--- @param pos integer 1-based byte index
+--- @return integer width
+local function whitespace_width(text, pos)
+  local b = string.byte(text, pos)
+  if not b then
+    return 0
+  end
+  -- ASCII whitespace: space, tab, LF, VT, FF, CR.
+  if b == 32 or (b >= 9 and b <= 13) then
+    return 1
+  end
+  if b < 0x80 then
+    return 0
+  end
+  local width
+  if b < 0xE0 then
+    width = 2
+  elseif b < 0xF0 then
+    width = 3
+  else
+    width = 4
+  end
+  local char = string.sub(text, pos, pos + width - 1)
+  if unicode_whitespace[char] then
+    return width
+  end
+  return 0
+end
+
+--- Byte length of the leading whitespace run.
+--- @param text string
+--- @return integer
+local function leading_whitespace_length(text)
+  local pos = 1
+  while pos <= #text do
+    local w = whitespace_width(text, pos)
+    if w == 0 then
+      break
+    end
+    pos = pos + w
+  end
+  return pos - 1
+end
+
+--- Start byte index (1-based) of the trailing whitespace run, or #text + 1 if
+--- there is none. A single forward scan finds the last non-whitespace byte.
+--- @param text string
+--- @return integer
+local function trailing_whitespace_start(text)
+  local pos = 1
+  local last_non_ws_end = 0
+  while pos <= #text do
+    local b = string.byte(text, pos)
+    if not b then
+      break
+    end
+    local width
+    if b < 0x80 then
+      width = 1
+    elseif b < 0xE0 then
+      width = 2
+    elseif b < 0xF0 then
+      width = 3
+    else
+      width = 4
+    end
+    local char = string.sub(text, pos, pos + width - 1)
+    local is_ws = (b == 32 or (b >= 9 and b <= 13)) or unicode_whitespace[char]
+    if not is_ws then
+      last_non_ws_end = pos + width - 1
+    end
+    pos = pos + width
+  end
+  return last_non_ws_end + 1
+end
 
 --- Get leading whitespaces.
 --- @param text string
 --- @return string
 M.get_leading_whitespace = function(text)
-  local leading_whitespace = string.match(text, leading_whitespace_pattern)
-
-  return leading_whitespace or ''
+  return string.sub(text, 1, leading_whitespace_length(text))
 end
 
 --- Get trailing whitespaces.
 --- @param text string
 --- @return string
 M.get_trailing_whitespace = function(text)
-  local trailing_whitespace = string.match(text, trailing_whitespace_pattern)
-
-  return trailing_whitespace or ''
+  return string.sub(text, trailing_whitespace_start(text))
 end
 
 --- Split by translated delimiter. Splitting is always literal — quoted
@@ -127,10 +222,12 @@ end
 --- @param text string
 --- @return string
 M.trim_leading_and_trailing_whitespace = function(text)
-  text = string.gsub(text, leading_whitespace_pattern, '')
-  text = string.gsub(text, trailing_whitespace_pattern, '')
-
-  return text
+  local leading = leading_whitespace_length(text)
+  local trailing_start = trailing_whitespace_start(text)
+  if trailing_start <= leading then
+    return ''
+  end
+  return string.sub(text, leading + 1, trailing_start - 1)
 end
 
 --- Detect the dominant whitespace pattern from a list of whitespace strings.

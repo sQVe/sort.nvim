@@ -31,6 +31,11 @@ describe('utils', function()
       local result = utils.get_leading_whitespace('')
       assert.are.equal('', result)
     end)
+
+    it('should match NBSP as leading whitespace', function()
+      local result = utils.get_leading_whitespace('\194\160hello')
+      assert.are.equal('\194\160', result)
+    end)
   end)
 
   describe('get_trailing_whitespace', function()
@@ -62,6 +67,11 @@ describe('utils', function()
     it('should return empty string for empty input', function()
       local result = utils.get_trailing_whitespace('')
       assert.are.equal('', result)
+    end)
+
+    it('should match NBSP as trailing whitespace', function()
+      local result = utils.get_trailing_whitespace('hello\194\160')
+      assert.are.equal('\194\160', result)
     end)
   end)
 
@@ -343,6 +353,33 @@ describe('utils', function()
     it('should return empty for empty input', function()
       local result = utils.trim_leading_and_trailing_whitespace('')
       assert.are.equal('', result)
+    end)
+
+    it('should strip NBSP (U+00A0)', function()
+      local result =
+        utils.trim_leading_and_trailing_whitespace('\194\160hello\194\160')
+      assert.are.equal('hello', result)
+    end)
+
+    it('should strip ideographic space (U+3000)', function()
+      local result = utils.trim_leading_and_trailing_whitespace(
+        '\227\128\128hello\227\128\128'
+      )
+      assert.are.equal('hello', result)
+    end)
+
+    it('should strip line separator (U+2028)', function()
+      local result = utils.trim_leading_and_trailing_whitespace(
+        '\226\128\168hello\226\128\168'
+      )
+      assert.are.equal('hello', result)
+    end)
+
+    it('should strip mixed ASCII and Unicode whitespace', function()
+      local result = utils.trim_leading_and_trailing_whitespace(
+        ' \194\160\t hello \194\160 '
+      )
+      assert.are.equal('hello', result)
     end)
   end)
 
