@@ -219,6 +219,46 @@ describe('utils', function()
       local result = utils.parse_arguments('', 'iuz')
       assert.is_nil(result.delimiter)
     end)
+
+    it(
+      'should not treat "s" as delimiter when combined with flag letters',
+      function()
+        local result = utils.parse_arguments('', 'us')
+        assert.are.equal(true, result.unique)
+        assert.is_nil(result.delimiter)
+      end
+    )
+
+    it(
+      'should not treat "t" as delimiter when combined with flag letters',
+      function()
+        local result = utils.parse_arguments('', 'ut')
+        assert.are.equal(true, result.unique)
+        assert.is_nil(result.delimiter)
+      end
+    )
+
+    it('should still allow punctuation delimiter with flag letters', function()
+      local result = utils.parse_arguments('', 'u,')
+      assert.are.equal(true, result.unique)
+      assert.are.equal(',', result.delimiter)
+    end)
+
+    it('should not misparse completely unknown flag characters', function()
+      local notify_calls = {}
+      local original_notify = vim.notify
+      vim.notify = function(msg, level)
+        notify_calls[#notify_calls + 1] = { msg = msg, level = level }
+      end
+
+      local result = utils.parse_arguments('', 'xyz')
+      vim.notify = original_notify
+
+      assert.are.equal(true, result.natural)
+      assert.are.equal(16, result.numerical)
+      assert.is_true(#notify_calls >= 1)
+      assert.is_true(string.find(notify_calls[1].msg, 'y', 1, true) ~= nil)
+    end)
   end)
 
   describe('parse_number', function()

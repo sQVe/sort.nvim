@@ -149,33 +149,53 @@ M.split_by_delimiter = function(text, translated_delimiter)
 end
 
 --- Parse options provided via bang and/or arguments.
+---
+--- Flag letters ({b, n, o, x, i, u, z}) bind first, so combining them with
+--- other characters doesn't accidentally consume a letter as a delimiter.
+--- `s` and `t` only map to space/tab delimiters when they stand alone;
+--- combined with other flags they would collide with the flag letter
+--- parsing, so they're rejected with a warning instead.
+---
 --- @param bang string
 --- @param arguments string
 --- @return SortOptions options
 M.parse_arguments = function(bang, arguments)
-  local delimiter_pattern = '[st%p]'
-  local numerical_pattern = '[bnox]'
-  local options = {}
+  local numerical_map = { b = 2, n = 10, o = 8, x = 16 }
+  local options = {
+    numerical = false,
+    ignore_case = false,
+    unique = false,
+    natural = false,
+    reverse = bang == '!',
+  }
 
-  options.delimiter = string.match(arguments, delimiter_pattern)
-
-  local numerical = string.match(arguments, numerical_pattern)
-  if numerical == 'b' then
-    options.numerical = 2
-  elseif numerical == 'o' then
-    options.numerical = 8
-  elseif numerical == 'x' then
-    options.numerical = 16
-  elseif numerical == 'n' then
-    options.numerical = 10
-  else
-    options.numerical = false
+  -- Standalone 's' or 't' is a delimiter (space/tab shortcut).
+  if arguments == 's' or arguments == 't' then
+    options.delimiter = arguments
+    return options
   end
 
-  options.ignore_case = string.match(arguments, 'i') ~= nil
-  options.reverse = bang == '!'
-  options.unique = string.match(arguments, 'u') ~= nil
-  options.natural = string.match(arguments, 'z') ~= nil
+  for i = 1, #arguments do
+    local c = string.sub(arguments, i, i)
+    if numerical_map[c] then
+      if options.numerical == false then
+        options.numerical = numerical_map[c]
+      end
+    elseif c == 'i' then
+      options.ignore_case = true
+    elseif c == 'u' then
+      options.unique = true
+    elseif c == 'z' then
+      options.natural = true
+    elseif string.match(c, '%p') then
+      options.delimiter = options.delimiter or c
+    else
+      vim.notify(
+        "sort.nvim: unknown flag '" .. c .. "' in arguments",
+        vim.log.levels.WARN
+      )
+    end
+  end
 
   return options
 end
