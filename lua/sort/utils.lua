@@ -3,6 +3,7 @@ local M = {}
 -- UTF-8 byte sequences for Unicode whitespace characters outside Lua's %s class.
 -- Covers Unicode White_Space (excluding ASCII already in %s).
 local unicode_whitespace = {
+  ['\194\133'] = true, -- U+0085 NEL (Next Line)
   ['\194\160'] = true, -- U+00A0 NBSP
   ['\225\154\128'] = true, -- U+1680 Ogham space mark
   ['\226\128\128'] = true, -- U+2000 en quad

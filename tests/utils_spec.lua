@@ -415,6 +415,12 @@ describe('utils', function()
       assert.are.equal('hello', result)
     end)
 
+    it('should strip NEL (U+0085)', function()
+      local result =
+        utils.trim_leading_and_trailing_whitespace('\194\133hello\194\133')
+      assert.are.equal('hello', result)
+    end)
+
     it('should strip mixed ASCII and Unicode whitespace', function()
       local result = utils.trim_leading_and_trailing_whitespace(
         ' \194\160\t hello \194\160 '
