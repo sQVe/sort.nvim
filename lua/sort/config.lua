@@ -89,6 +89,46 @@ local function validate(overrides)
     warn('whitespace', 'table', type(overrides.whitespace))
     overrides.whitespace = nil
   end
+
+  if overrides.mappings ~= nil and overrides.mappings ~= false then
+    if type(overrides.mappings) ~= 'table' then
+      warn('mappings', 'table or false', type(overrides.mappings))
+      overrides.mappings = nil
+    else
+      local m = overrides.mappings
+      if
+        m.operator ~= nil
+        and m.operator ~= false
+        and type(m.operator) ~= 'string'
+      then
+        warn('mappings.operator', 'string or false', type(m.operator))
+        m.operator = nil
+      end
+      local sub_keys = {
+        textobject = { 'inner', 'around' },
+        motion = { 'next_delimiter', 'prev_delimiter' },
+      }
+      for group, keys in pairs(sub_keys) do
+        if m[group] ~= nil and m[group] ~= false then
+          if type(m[group]) ~= 'table' then
+            warn('mappings.' .. group, 'table or false', type(m[group]))
+            m[group] = nil
+          else
+            for _, k in ipairs(keys) do
+              if m[group][k] ~= nil and type(m[group][k]) ~= 'string' then
+                warn(
+                  'mappings.' .. group .. '.' .. k,
+                  'string',
+                  type(m[group][k])
+                )
+                m[group][k] = nil
+              end
+            end
+          end
+        end
+      end
+    end
+  end
 end
 
 --- Get user config.
@@ -101,7 +141,7 @@ end
 --- @param overrides? Config
 --- @return Config user_config
 M.setup = function(overrides)
-  overrides = overrides or {}
+  overrides = vim.deepcopy(overrides or {})
   validate(overrides)
   user_config = vim.tbl_deep_extend('force', user_config, overrides)
 

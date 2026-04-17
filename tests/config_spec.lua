@@ -280,5 +280,84 @@ describe('config', function()
       assert.are.equal('gS', user_config.keymap)
       assert.are.equal(true, user_config.natural_sort)
     end)
+
+    it('should reject non-table mappings and keep defaults', function()
+      config.setup({ mappings = 42 })
+      local user_config = config.get_user_config()
+
+      assert.are.equal('go', user_config.mappings.operator)
+      assert.is_true(#notify_calls >= 1)
+      assert.is_true(
+        string.find(notify_calls[1].msg, 'mappings', 1, true) ~= nil
+      )
+    end)
+
+    it('should accept false for mappings to disable', function()
+      config.setup({ mappings = false })
+      local user_config = config.get_user_config()
+
+      assert.are.equal(false, user_config.mappings)
+      assert.are.equal(0, #notify_calls)
+    end)
+
+    it('should reject non-string mappings.operator', function()
+      config.setup({ mappings = { operator = 42 } })
+      local user_config = config.get_user_config()
+
+      assert.are.equal('go', user_config.mappings.operator)
+      assert.is_true(#notify_calls >= 1)
+    end)
+
+    it('should accept false for mappings.operator to disable', function()
+      config.setup({ mappings = { operator = false } })
+      local user_config = config.get_user_config()
+
+      assert.are.equal(false, user_config.mappings.operator)
+      assert.are.equal(0, #notify_calls)
+    end)
+
+    it('should reject non-table mappings.textobject', function()
+      config.setup({ mappings = { textobject = 'nope' } })
+      local user_config = config.get_user_config()
+
+      assert.are.equal('is', user_config.mappings.textobject.inner)
+      assert.is_true(#notify_calls >= 1)
+    end)
+
+    it('should reject non-string mappings.textobject.inner', function()
+      config.setup({ mappings = { textobject = { inner = 42 } } })
+      local user_config = config.get_user_config()
+
+      assert.are.equal('is', user_config.mappings.textobject.inner)
+      assert.is_true(#notify_calls >= 1)
+    end)
+
+    it('should reject non-string mappings.motion.next_delimiter', function()
+      config.setup({ mappings = { motion = { next_delimiter = true } } })
+      local user_config = config.get_user_config()
+
+      assert.are.equal(']s', user_config.mappings.motion.next_delimiter)
+      assert.is_true(#notify_calls >= 1)
+    end)
+
+    it('should accept valid mappings without warnings', function()
+      config.setup({
+        mappings = {
+          operator = 'gS',
+          textobject = { inner = 'iS', around = 'aS' },
+          motion = { next_delimiter = ']S', prev_delimiter = '[S' },
+        },
+      })
+
+      assert.are.equal(0, #notify_calls)
+    end)
+
+    it('should not mutate the overrides table passed in', function()
+      local overrides = { natural_sort = 'bogus', keymap = 42 }
+      config.setup(overrides)
+
+      assert.are.equal('bogus', overrides.natural_sort)
+      assert.are.equal(42, overrides.keymap)
+    end)
   end)
 end)
