@@ -1,27 +1,126 @@
 local M = {}
 
-local leading_whitespace_pattern = '^%s+'
-local trailing_whitespace_pattern = '%s+$'
+-- UTF-8 byte sequences for Unicode whitespace characters outside Lua's %s class.
+-- Covers Unicode White_Space (excluding ASCII already in %s).
+local unicode_whitespace = {
+  ['\194\133'] = true, -- U+0085 NEL (Next Line)
+  ['\194\160'] = true, -- U+00A0 NBSP
+  ['\225\154\128'] = true, -- U+1680 Ogham space mark
+  ['\226\128\128'] = true, -- U+2000 en quad
+  ['\226\128\129'] = true, -- U+2001 em quad
+  ['\226\128\130'] = true, -- U+2002 en space
+  ['\226\128\131'] = true, -- U+2003 em space
+  ['\226\128\132'] = true, -- U+2004 three-per-em space
+  ['\226\128\133'] = true, -- U+2005 four-per-em space
+  ['\226\128\134'] = true, -- U+2006 six-per-em space
+  ['\226\128\135'] = true, -- U+2007 figure space
+  ['\226\128\136'] = true, -- U+2008 punctuation space
+  ['\226\128\137'] = true, -- U+2009 thin space
+  ['\226\128\138'] = true, -- U+200A hair space
+  ['\226\128\168'] = true, -- U+2028 line separator
+  ['\226\128\169'] = true, -- U+2029 paragraph separator
+  ['\226\128\175'] = true, -- U+202F narrow NBSP
+  ['\226\129\159'] = true, -- U+205F medium math space
+  ['\227\128\128'] = true, -- U+3000 ideographic space
+}
+
+--- Byte length of one whitespace character at position `pos`, or 0 if the
+--- character at `pos` is not whitespace.
+--- @param text string
+--- @param pos integer 1-based byte index
+--- @return integer width
+local function whitespace_width(text, pos)
+  local b = string.byte(text, pos)
+  if not b then
+    return 0
+  end
+  -- ASCII whitespace: space, tab, LF, VT, FF, CR.
+  if b == 32 or (b >= 9 and b <= 13) then
+    return 1
+  end
+  if b < 0x80 then
+    return 0
+  end
+  local width
+  if b < 0xE0 then
+    width = 2
+  elseif b < 0xF0 then
+    width = 3
+  else
+    width = 4
+  end
+  local char = string.sub(text, pos, pos + width - 1)
+  if unicode_whitespace[char] then
+    return width
+  end
+  return 0
+end
+
+--- Byte length of the leading whitespace run.
+--- @param text string
+--- @return integer
+local function leading_whitespace_length(text)
+  local pos = 1
+  while pos <= #text do
+    local w = whitespace_width(text, pos)
+    if w == 0 then
+      break
+    end
+    pos = pos + w
+  end
+  return pos - 1
+end
+
+--- Start byte index (1-based) of the trailing whitespace run, or #text + 1 if
+--- there is none. A single forward scan finds the last non-whitespace byte.
+--- @param text string
+--- @return integer
+local function trailing_whitespace_start(text)
+  local pos = 1
+  local last_non_ws_end = 0
+  while pos <= #text do
+    local b = string.byte(text, pos)
+    if not b then
+      break
+    end
+    local width
+    if b < 0x80 then
+      width = 1
+    elseif b < 0xE0 then
+      width = 2
+    elseif b < 0xF0 then
+      width = 3
+    else
+      width = 4
+    end
+    local char = string.sub(text, pos, pos + width - 1)
+    local is_ws = (b == 32 or (b >= 9 and b <= 13)) or unicode_whitespace[char]
+    if not is_ws then
+      last_non_ws_end = pos + width - 1
+    end
+    pos = pos + width
+  end
+  return last_non_ws_end + 1
+end
 
 --- Get leading whitespaces.
 --- @param text string
 --- @return string
 M.get_leading_whitespace = function(text)
-  local leading_whitespace = string.match(text, leading_whitespace_pattern)
-
-  return leading_whitespace or ''
+  return string.sub(text, 1, leading_whitespace_length(text))
 end
 
 --- Get trailing whitespaces.
 --- @param text string
 --- @return string
 M.get_trailing_whitespace = function(text)
-  local trailing_whitespace = string.match(text, trailing_whitespace_pattern)
-
-  return trailing_whitespace or ''
+  return string.sub(text, trailing_whitespace_start(text))
 end
 
---- Split by translated delimiter.
+--- Split by translated delimiter. Splitting is always literal — quoted
+--- strings (`"a,b",c`) and bracket-protected regions (`(a,b),c`) are not
+--- honored, even when the delimiter appears inside them. See README
+--- "Limitations".
 --- @param text string
 --- @param translated_delimiter string
 --- @return string[] matches
@@ -51,33 +150,60 @@ M.split_by_delimiter = function(text, translated_delimiter)
 end
 
 --- Parse options provided via bang and/or arguments.
+---
+--- Flag letters ({b, n, o, x, i, u, z}) bind first, so combining them with
+--- other characters doesn't accidentally consume a letter as a delimiter.
+--- `s` and `t` only map to space/tab delimiters when they stand alone;
+--- combined with other flags they would collide with the flag letter
+--- parsing, so they're rejected with a warning instead.
+---
 --- @param bang string
 --- @param arguments string
 --- @return SortOptions options
 M.parse_arguments = function(bang, arguments)
-  local delimiter_pattern = '[st%p]'
-  local numerical_pattern = '[bnox]'
-  local options = {}
+  local numerical_map = { b = 2, n = 10, o = 8, x = 16 }
+  local options = {
+    numerical = false,
+    ignore_case = false,
+    unique = false,
+    natural = false,
+    reverse = bang == '!',
+  }
 
-  options.delimiter = string.match(arguments, delimiter_pattern)
-
-  local numerical = string.match(arguments, numerical_pattern)
-  if numerical == 'b' then
-    options.numerical = 2
-  elseif numerical == 'o' then
-    options.numerical = 8
-  elseif numerical == 'x' then
-    options.numerical = 16
-  elseif numerical == 'n' then
-    options.numerical = 10
-  else
-    options.numerical = false
+  -- Standalone 's' or 't' is a delimiter (space/tab shortcut).
+  if arguments == 's' or arguments == 't' then
+    options.delimiter = arguments
+    return options
   end
 
-  options.ignore_case = string.match(arguments, 'i') ~= nil
-  options.reverse = bang == '!'
-  options.unique = string.match(arguments, 'u') ~= nil
-  options.natural = string.match(arguments, 'z') ~= nil
+  for i = 1, #arguments do
+    local c = string.sub(arguments, i, i)
+    if numerical_map[c] then
+      if options.numerical == false then
+        options.numerical = numerical_map[c]
+      end
+    elseif c == 'i' then
+      options.ignore_case = true
+    elseif c == 'u' then
+      options.unique = true
+    elseif c == 'z' then
+      options.natural = true
+    elseif c == 's' or c == 't' then
+      vim.notify(
+        "sort.nvim: '"
+          .. c
+          .. "' delimiter shortcut must be standalone, not combined with flags",
+        vim.log.levels.WARN
+      )
+    elseif string.match(c, '%p') then
+      options.delimiter = options.delimiter or c
+    else
+      vim.notify(
+        "sort.nvim: unknown flag '" .. c .. "' in arguments",
+        vim.log.levels.WARN
+      )
+    end
+  end
 
   return options
 end
@@ -89,19 +215,20 @@ end
 M.parse_number = function(text, base)
   base = base or 10
 
-  -- Define patterns for different number bases.
+  -- Anchored patterns: the whole input must be a valid number in the given base.
+  -- Unanchored patterns would match embedded digit runs, e.g. '5xyz' as 5.
   local patterns = {
-    [2] = '%-?[01]+',
-    [8] = '%-?[0-7]+',
-    [10] = '%-?[%d.]+',
-    [16] = '%-?0[xX]%x+',
+    [2] = '^%-?[01]+$',
+    [8] = '^%-?[0-7]+$',
+    [10] = '^%-?[%d.]+$',
+    [16] = '^%-?0[xX]%x+$',
   }
 
   local match = string.match(text, patterns[base] or patterns[10])
 
   -- For hexadecimal, also try pattern without 0x prefix.
   if base == 16 and not match then
-    match = string.match(text, '%-?%x+')
+    match = string.match(text, '^%-?%x+$')
   end
 
   return tonumber(match or '', base ~= 10 and base or nil)
@@ -123,10 +250,12 @@ end
 --- @param text string
 --- @return string
 M.trim_leading_and_trailing_whitespace = function(text)
-  text = string.gsub(text, leading_whitespace_pattern, '')
-  text = string.gsub(text, trailing_whitespace_pattern, '')
-
-  return text
+  local leading = leading_whitespace_length(text)
+  local trailing_start = trailing_whitespace_start(text)
+  if trailing_start <= leading then
+    return ''
+  end
+  return string.sub(text, leading + 1, trailing_start - 1)
 end
 
 --- Detect the dominant whitespace pattern from a list of whitespace strings.
@@ -201,6 +330,21 @@ end
 M.parse_natural_segments = function(str)
   local segments = {}
   local i = 1
+
+  -- Leading '-' before digits is a sign, not a separator. Mid-string '-' keeps
+  -- its separator semantics (see "dashes as separators" in natural sort).
+  if str:sub(1, 1) == '-' and string.match(str:sub(2, 2), '%d') ~= nil then
+    local j = 2
+    while j <= #str and string.match(str:sub(j, j), '%d') do
+      j = j + 1
+    end
+    table.insert(segments, {
+      text = str:sub(1, j - 1),
+      is_number = true,
+      is_punctuation = false,
+    })
+    i = j
+  end
 
   while i <= #str do
     local start = i
@@ -336,6 +480,21 @@ M.natural_compare = function(a, b, ignore_case)
 end
 
 --- Normalize whitespace for a segment based on configuration.
+---
+--- Whitespace policy for delimiter_sort:
+---   - Items carry their own leading_ws and trailing_ws; whitespace "moves with
+---     the item" when items reorder.
+---   - When order changes (and natural_sort is disabled), every item's
+---     leading_ws is passed through this function uniformly — no positional
+---     special-casing. Natural sort preserves whitespace verbatim to protect
+---     intentional column alignment.
+---   - This function only normalizes leading_ws. The caller zeros trailing_ws
+---     directly so all inter-item whitespace lives in the next item's
+---     leading_ws.
+---   - Whitespace at or above `alignment_threshold` chars is preserved as
+---     deliberate column alignment. Shorter whitespace is replaced with the
+---     dominant pattern detected across items.
+---
 --- @param original_whitespace string
 --- @param dominant_pattern string
 --- @param alignment_threshold number
@@ -354,16 +513,25 @@ M.normalize_whitespace = function(
   return dominant_pattern
 end
 
---- Rejects '.5', accepts '0.5' and '5.'.
+--- Accepts optional sign, with digits before or after the decimal point,
+--- with optional scientific exponent. Requires at least one digit, so `.`
+--- alone and `e5` fail. `tonumber` is the final guard.
 --- @param str string
 --- @return boolean
 M.is_pure_number = function(str)
   if str == nil or str == '' then
     return false
   end
-  local has_basic_number = string.match(str, '^[%+%-]?%d+%.?%d*$') ~= nil
-  local has_scientific = string.match(str, '^[%+%-]?%d+%.?%d*[eE][%+%-]?%d+$')
-    ~= nil
+  -- Lua patterns have no alternation, so match the two mantissa shapes
+  -- separately: digits-first (`5`, `5.`, `5.5`) and dot-first (`.5`).
+  local digits_first = '[%+%-]?%d+%.?%d*'
+  local dot_first = '[%+%-]?%.%d+'
+  local has_basic_number = string.match(str, '^' .. digits_first .. '$') ~= nil
+    or string.match(str, '^' .. dot_first .. '$') ~= nil
+  local has_scientific = string.match(
+    str,
+    '^' .. digits_first .. '[eE][%+%-]?%d+$'
+  ) ~= nil or string.match(str, '^' .. dot_first .. '[eE][%+%-]?%d+$') ~= nil
   return (has_basic_number or has_scientific) and tonumber(str) ~= nil
 end
 
@@ -381,14 +549,22 @@ M.all_pure_numbers = function(items)
   return true
 end
 
+--- Empty strings sort after all numeric values so they cluster at one end
+--- instead of slotting between negatives and positives as coerced zeros.
 --- Falls back to string comparison if tonumber fails (should not occur when
 --- called via the sorting pipeline which pre-validates with all_pure_numbers).
 --- @param a string
 --- @param b string
 --- @return boolean
 M.math_compare = function(a, b)
-  local na = a == '' and 0 or tonumber(a)
-  local nb = b == '' and 0 or tonumber(b)
+  if a == '' then
+    return false
+  end
+  if b == '' then
+    return true
+  end
+  local na = tonumber(a)
+  local nb = tonumber(b)
   if na and nb then
     return na < nb
   end

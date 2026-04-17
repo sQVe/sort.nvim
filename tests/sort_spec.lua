@@ -55,7 +55,35 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal(',,,apple,banana,cherry,', result)
+      assert.are.equal(',apple,banana,cherry,', result)
+    end)
+
+    it('should handle leading delimiter without trailing', function()
+      local text = ',c,a,b'
+      local options = {
+        delimiter = ',',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal(',a,b,c', result)
+    end)
+
+    it('should handle leading and trailing delimiter short case', function()
+      local text = ',c,a,b,'
+      local options = {
+        delimiter = ',',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal(',a,b,c,', result)
     end)
 
     it(
@@ -214,7 +242,44 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal(',,,,,', result)
+      assert.are.equal(',,,', result)
+    end)
+
+    -- Magic Lua pattern chars as delimiters (must be treated literally).
+    it('should treat magic pattern chars as literal delimiters', function()
+      local cases = {
+        { input = 'c(a(b', delim = '(', expected = 'a(b(c' },
+        { input = 'c)a)b', delim = ')', expected = 'a)b)c' },
+        { input = 'c%a%b', delim = '%', expected = 'a%b%c' },
+        { input = 'c.a.b', delim = '.', expected = 'a.b.c' },
+        { input = 'c+a+b', delim = '+', expected = 'a+b+c' },
+        { input = 'c*a*b', delim = '*', expected = 'a*b*c' },
+        { input = 'c?a?b', delim = '?', expected = 'a?b?c' },
+        { input = 'c^a^b', delim = '^', expected = 'a^b^c' },
+        { input = 'c$a$b', delim = '$', expected = 'a$b$c' },
+        { input = 'c-a-b', delim = '-', expected = 'a-b-c' },
+      }
+      for _, case in ipairs(cases) do
+        local result = sort.delimiter_sort(case.input, {
+          delimiter = case.delim,
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        })
+        assert.are.equal(case.expected, result)
+      end
+    end)
+
+    it('should preserve leading/trailing dot delimiter', function()
+      local result = sort.delimiter_sort('.c.a.b.', {
+        delimiter = '.',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+      })
+      assert.are.equal('.a.b.c.', result)
     end)
 
     -- Delimiter translation tests.
@@ -359,8 +424,10 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      -- The actual result from implementation (whitespace preserved during sort).
-      assert.are.equal('apple\r,banana\t,cherry\n', result)
+      -- Per the whitespace policy: when order changes, inter-item trailing
+      -- whitespace is normalized away. Only the input's outer trailing is
+      -- preserved — here the original last item (banana) had trailing '\t'.
+      assert.are.equal('apple,banana,cherry\t', result)
     end)
 
     it('should handle whitespace-only segments', function()
@@ -480,8 +547,9 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      -- With numerical sorting, these are sorted by numeric value first, then alphabetically.
-      assert.are.equal('5b,10A,20A', result)
+      -- Items are not pure numbers (alpha suffix); parse_number returns nil,
+      -- so comparison falls back to case-insensitive string sort.
+      assert.are.equal('10a,20A,5B', result)
     end)
 
     it(
@@ -515,6 +583,49 @@ describe('sort', function()
 
         local result = sort.delimiter_sort(text, options)
         assert.are.equal('b, d,   e, f, l', result)
+      end
+    )
+
+    it(
+      'should apply uniform whitespace policy regardless of item position (main-jla)',
+      function()
+        local options = {
+          delimiter = ',',
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
+
+        -- Input with inconsistent internal spacing collapses to a uniform gap;
+        -- no outer whitespace is introduced when the input had none.
+        assert.are.equal('a, b, c', sort.delimiter_sort('c , a , b', options))
+
+        -- Input's outer whitespace is preserved; internal gap is uniform and
+        -- independent of which item ends up at each boundary.
+        assert.are.equal(' a, b, c ', sort.delimiter_sort(' c,b,a ', options))
+      end
+    )
+
+    it(
+      'should treat first, middle, and last items identically (main-jla)',
+      function()
+        local options = {
+          delimiter = ',',
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
+
+        -- Every item in the input has shape ` x ` (single space on both
+        -- sides) and outer whitespace is a single space on each end. Under
+        -- the uniform policy, every inter-item gap is the same and the outer
+        -- whitespace on the output matches the input.
+        assert.are.equal(
+          ' a, b, c ',
+          sort.delimiter_sort(' c , a , b ', options)
+        )
       end
     )
   end)
@@ -693,6 +804,21 @@ describe('sort', function()
   end)
 
   describe('natural sorting', function()
+    it('should sort negative numbers in mixed list numerically', function()
+      local text = '-5,-10,abc'
+      local options = {
+        delimiter = ',',
+        ignore_case = false,
+        numerical = nil,
+        reverse = false,
+        unique = false,
+        natural = true,
+      }
+
+      local result = sort.delimiter_sort(text, options)
+      assert.are.equal('-10,-5,abc', result)
+    end)
+
     -- Basic natural sorting tests
     it('should sort alphanumeric strings naturally', function()
       local text = 'item10,item2,item1,item20'
@@ -1320,7 +1446,7 @@ describe('sort', function()
       assert.are.equal(' -90 , -10 , 5 ', result)
     end)
 
-    it('should skip empty segments in detection', function()
+    it('should sort empty segments after numbers', function()
       local text = '-10,,-90,5'
       local options = {
         delimiter = nil,
@@ -1332,7 +1458,7 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('-90,-10,,5', result)
+      assert.are.equal('-90,-10,5,', result)
     end)
 
     it('should reverse mathematical sort correctly', function()
@@ -1392,7 +1518,7 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('-10,-90,item-10,item-12', result)
+      assert.are.equal('-90,-10,item-10,item-12', result)
     end)
 
     it('should preserve identifier sorting in mixed lists', function()
@@ -1425,7 +1551,7 @@ describe('sort', function()
       assert.are.equal('-1,-10,-90', result)
     end)
 
-    it('should handle empty segments as 0 in math sort', function()
+    it('should sort empty segments after numbers in math sort', function()
       local text = '-10,,-5,10'
       local options = {
         delimiter = nil,
@@ -1437,7 +1563,7 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('-10,-5,,10', result)
+      assert.are.equal('-10,-5,10,', result)
     end)
   end)
 
@@ -1519,7 +1645,7 @@ describe('sort', function()
         }
 
         local result = sort.line_sort_text(text, options)
-        assert.are.equal('-10\n-90\nitem-2\nitem-10', result)
+        assert.are.equal('-90\n-10\nitem-2\nitem-10', result)
       end
     )
 
@@ -1538,7 +1664,7 @@ describe('sort', function()
       assert.are.equal('-1\n-10\n-90', result)
     end)
 
-    it('should handle empty lines as 0 in math sort', function()
+    it('should sort empty lines after numbers in math sort', function()
       local text = '-10\n\n-5\n10'
       local options = {
         delimiter = nil,
@@ -1550,7 +1676,7 @@ describe('sort', function()
       }
 
       local result = sort.line_sort_text(text, options)
-      assert.are.equal('-10\n-5\n\n10', result)
+      assert.are.equal('-10\n-5\n10\n', result)
     end)
   end)
 

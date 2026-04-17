@@ -108,6 +108,11 @@ When selecting within a single line, the plugin performs delimiter-based sorting
 - `x` - Sort by hexadecimal numbers
 - `z` - Natural sorting (handles numbers in strings properly)
 
+**Limitations:** Delimiter splitting is literal. Quoted strings (`"a,b",c`) and
+bracket-protected regions (`(a,b),c`) are not honored — the delimiter always
+splits, even inside a quoted value. If your data requires quote-aware
+splitting, preprocess it with a dedicated CSV tool before sorting.
+
 ### Motion-based sorting
 
 **Sort** provides Vim-style operators and text objects for efficient sorting:

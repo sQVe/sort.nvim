@@ -68,10 +68,9 @@ M.delimiter_sort = function(text, options)
     matches = utils.split_by_delimiter(text, top_translated_delimiter)
 
     if #matches > 1 then
-      has_leading_delimiter =
-        string.match(text, '^' .. top_translated_delimiter)
-      has_trailing_delimiter =
-        string.match(text, top_translated_delimiter .. '$')
+      local escaped = vim.pesc(top_translated_delimiter)
+      has_leading_delimiter = string.match(text, '^' .. escaped) ~= nil
+      has_trailing_delimiter = string.match(text, escaped .. '$') ~= nil
       break
     end
   end
@@ -97,16 +96,17 @@ M.delimiter_sort = function(text, options)
     local trailing_ws = utils.get_trailing_whitespace(match)
     local trimmed = utils.trim_leading_and_trailing_whitespace(match)
 
-    -- Skip structural trailing empty segment when:
-    -- 1. We have a trailing delimiter but no leading delimiter
-    -- 2. This is the last segment and it's empty
-    -- 3. This indicates the empty segment is structural, not content
+    -- Drop structural empty segments at the boundaries: when text begins or
+    -- ends with the delimiter, split yields a sentinel empty we re-prepend
+    -- or re-append below. Keeping it causes duplicate delimiters in output.
+    local is_structural_leading_empty = has_leading_delimiter
+      and i == 1
+      and match == ''
     local is_structural_trailing_empty = has_trailing_delimiter
-      and not has_leading_delimiter
       and i == #matches
       and match == ''
 
-    if not is_structural_trailing_empty then
+    if not is_structural_trailing_empty and not is_structural_leading_empty then
       if trimmed == '' and top_translated_delimiter ~= ' ' then
         -- For other delimiters, preserve whitespace-only segments.
         table.insert(items, {
@@ -127,6 +127,12 @@ M.delimiter_sort = function(text, options)
       end
     end
   end
+
+  -- Capture outer whitespace from the original input. When items reorder,
+  -- the outer leading/trailing belongs to the text, not to whichever item
+  -- was originally at position 1/N — so we re-apply it after normalization.
+  local outer_leading_ws = items[1] and items[1].leading_ws or ''
+  local outer_trailing_ws = items[#items] and items[#items].trailing_ws or ''
 
   -- Check if sorting will change the order.
   local original_order = {}
@@ -222,20 +228,30 @@ M.delimiter_sort = function(text, options)
       top_translated_delimiter
     )
 
-    -- Normalize whitespace for each item.
-    for i, item in ipairs(items) do
+    -- Normalize whitespace for each item. Every item is treated identically:
+    -- short leading whitespace is replaced with the dominant pattern; whitespace
+    -- at or above the alignment threshold is preserved as deliberate column
+    -- alignment. trailing_ws is cleared so inter-item spacing lives entirely in
+    -- the next item's leading_ws, yielding an identical gap between every pair.
+    for _, item in ipairs(items) do
       if item.trimmed ~= '' then
-        -- For comma-separated values, first item should have no leading whitespace.
-        if i == 1 and top_translated_delimiter == ',' then
-          item.leading_ws = ''
-        else
-          item.leading_ws = utils.normalize_whitespace(
-            item.leading_ws,
-            dominant_pattern,
-            alignment_threshold
-          )
-        end
+        item.leading_ws = utils.normalize_whitespace(
+          item.leading_ws,
+          dominant_pattern,
+          alignment_threshold
+        )
+        item.trailing_ws = ''
       end
+    end
+
+    -- Re-apply the input's outer leading/trailing to the boundary items so
+    -- input `'x,y'` does not gain leading whitespace and input `' x,y '` keeps
+    -- its outer whitespace regardless of which item lands at each end.
+    if items[1] and items[1].trimmed ~= '' then
+      items[1].leading_ws = outer_leading_ws
+    end
+    if items[#items] and items[#items].trimmed ~= '' then
+      items[#items].trailing_ws = outer_trailing_ws
     end
   end
 

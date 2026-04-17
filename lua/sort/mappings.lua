@@ -12,6 +12,7 @@ local function setup_operator_mappings(mappings)
 
   -- Normal mode operator mapping.
   vim.keymap.set('n', operator_key, function()
+    operator.capture_options()
     vim.o.operatorfunc = 'v:lua._sort_operator'
     return 'g@'
   end, {
@@ -59,6 +60,7 @@ local function setup_operator_mappings(mappings)
     vim.api.nvim_buf_set_mark(0, '>', end_row, end_col - 1, {})
 
     -- Call the operator with visual mode flag.
+    operator.capture_options()
     operator.sort_operator(detected_mode, true)
   end, {
     desc = 'Sort selection',
@@ -67,6 +69,7 @@ local function setup_operator_mappings(mappings)
 
   -- Line-wise shortcut (operator + operator = line).
   vim.keymap.set('n', operator_key .. operator_key, function()
+    operator.capture_options()
     vim.o.operatorfunc = 'v:lua._sort_operator'
     return 'g@_'
   end, {

@@ -3,6 +3,34 @@ local utils = require('sort.utils')
 
 local M = {}
 
+-- Snapshot of user options captured when the operator is invoked via a
+-- keymap. Dot-repeat calls the operatorfunc directly without re-running the
+-- keymap expression, so reading live config there would diverge from the
+-- invocation. Capturing here keeps vim-repeat semantics: `.` reproduces the
+-- action with the options active at first press.
+local captured_options = nil
+
+local function snapshot_user_options()
+  local config = require('sort.config')
+  local user_config = config.get_user_config()
+  return {
+    natural = user_config.natural_sort,
+    ignore_case = user_config.ignore_case,
+    unique = user_config.unique,
+  }
+end
+
+--- Capture the current config as a snapshot for subsequent sort_operator
+--- calls (including dot-repeat). Called by operator keymaps before g@ fires.
+M.capture_options = function()
+  captured_options = snapshot_user_options()
+end
+
+--- Clear the captured options snapshot. Test helper.
+M.reset_captured_options = function()
+  captured_options = nil
+end
+
 --- Get text based on motion type and marks.
 --- @param motion_type string Motion type ('line', 'char', 'block')
 --- @param start_pos table Start position [row, col]
@@ -228,6 +256,11 @@ end
 --- @param motion_type string Motion type from operatorfunc
 --- @param from_visual boolean|nil Whether called from visual mode
 M.sort_operator = function(motion_type, from_visual)
+  if not vim.bo.modifiable then
+    vim.notify('Buffer is not modifiable', vim.log.levels.WARN)
+    return
+  end
+
   local start_pos, end_pos, is_visual_marks
 
   if from_visual then
@@ -280,20 +313,11 @@ M.sort_operator = function(motion_type, from_visual)
       local ends_at_line_end = end_pos[2] >= string.len(last_line) - 1
         or string.match(after_selection, '^[%s,;%]%)%}]*$')
 
-      -- For selections spanning 3+ lines, be more lenient - treat as line motion
-      -- if at least one boundary looks like a line boundary. This handles text
-      -- objects like `ii` (inside indent) that may not start at column 0 but
-      -- still represent a logical line selection.
-      local spans_many_lines = (end_pos[1] - start_pos[1]) >= 2
-
-      -- Treat as line motion if:
-      -- 1. "Perfect lines" selection (starts at beginning, ends at line end)
-      -- 2. Multi-line text objects that cover mostly complete lines
-      local is_perfect_lines = starts_at_line_beginning and ends_at_line_end
-      local is_multiline_block = spans_many_lines
-        and (starts_at_line_beginning or ends_at_line_end)
-
-      if is_perfect_lines or is_multiline_block then
+      -- Promote to line motion only when BOTH boundaries look line-shaped.
+      -- A one-sided match (e.g. starts at col 0 but ends mid-line) is a
+      -- deliberate partial selection — widening it silently would discard
+      -- characters the user intended to keep.
+      if starts_at_line_beginning and ends_at_line_end then
         effective_motion_type = 'line'
       end
     end
@@ -313,11 +337,10 @@ M.sort_operator = function(motion_type, from_visual)
 
   local options = utils.parse_arguments('', '')
 
-  local config = require('sort.config')
-  local user_config = config.get_user_config()
-  options.natural = user_config.natural_sort
-  options.ignore_case = user_config.ignore_case
-  options.unique = user_config.unique
+  local snapshot = captured_options or snapshot_user_options()
+  options.natural = snapshot.natural
+  options.ignore_case = snapshot.ignore_case
+  options.unique = snapshot.unique
 
   local sorted_text
   local lines = vim.split(text, '\n')

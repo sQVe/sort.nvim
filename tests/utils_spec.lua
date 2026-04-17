@@ -31,6 +31,11 @@ describe('utils', function()
       local result = utils.get_leading_whitespace('')
       assert.are.equal('', result)
     end)
+
+    it('should match NBSP as leading whitespace', function()
+      local result = utils.get_leading_whitespace('\194\160hello')
+      assert.are.equal('\194\160', result)
+    end)
   end)
 
   describe('get_trailing_whitespace', function()
@@ -62,6 +67,11 @@ describe('utils', function()
     it('should return empty string for empty input', function()
       local result = utils.get_trailing_whitespace('')
       assert.are.equal('', result)
+    end)
+
+    it('should match NBSP as trailing whitespace', function()
+      local result = utils.get_trailing_whitespace('hello\194\160')
+      assert.are.equal('\194\160', result)
     end)
   end)
 
@@ -105,6 +115,25 @@ describe('utils', function()
       local result = utils.split_by_delimiter('a\tb\tc', '\t')
       assert.are.same({ 'a', 'b', 'c' }, result)
     end)
+
+    it(
+      'should split literally through quoted regions (main-8v6: quote-awareness is unsupported)',
+      function()
+        -- The plugin does not implement CSV/quote-aware splitting. Delimiters
+        -- inside quoted strings or brackets are treated as normal delimiters.
+        -- This test locks in the literal behavior so any future change to add
+        -- quote awareness is a conscious, documented decision rather than an
+        -- accidental regression. See README "Limitations".
+        assert.are.same(
+          { '"a', 'b"', 'c' },
+          utils.split_by_delimiter('"a,b",c', ',')
+        )
+        assert.are.same(
+          { '(a', 'b)', 'c' },
+          utils.split_by_delimiter('(a,b),c', ',')
+        )
+      end
+    )
   end)
 
   describe('parse_arguments', function()
@@ -190,6 +219,66 @@ describe('utils', function()
       local result = utils.parse_arguments('', 'iuz')
       assert.is_nil(result.delimiter)
     end)
+
+    it(
+      'should not treat "s" as delimiter when combined with flag letters',
+      function()
+        local result = utils.parse_arguments('', 'us')
+        assert.are.equal(true, result.unique)
+        assert.is_nil(result.delimiter)
+      end
+    )
+
+    it(
+      'should not treat "t" as delimiter when combined with flag letters',
+      function()
+        local result = utils.parse_arguments('', 'ut')
+        assert.are.equal(true, result.unique)
+        assert.is_nil(result.delimiter)
+      end
+    )
+
+    it(
+      'should warn with a targeted message for s/t combined with flags',
+      function()
+        local notify_calls = {}
+        local original_notify = vim.notify
+        vim.notify = function(msg, level)
+          notify_calls[#notify_calls + 1] = { msg = msg, level = level }
+        end
+
+        utils.parse_arguments('', 'us')
+        vim.notify = original_notify
+
+        assert.is_true(#notify_calls >= 1)
+        assert.is_true(
+          string.find(notify_calls[1].msg, 'standalone', 1, true) ~= nil
+        )
+        assert.is_true(string.find(notify_calls[1].msg, "'s'", 1, true) ~= nil)
+      end
+    )
+
+    it('should still allow punctuation delimiter with flag letters', function()
+      local result = utils.parse_arguments('', 'u,')
+      assert.are.equal(true, result.unique)
+      assert.are.equal(',', result.delimiter)
+    end)
+
+    it('should not misparse completely unknown flag characters', function()
+      local notify_calls = {}
+      local original_notify = vim.notify
+      vim.notify = function(msg, level)
+        notify_calls[#notify_calls + 1] = { msg = msg, level = level }
+      end
+
+      local result = utils.parse_arguments('', 'xyz')
+      vim.notify = original_notify
+
+      assert.are.equal(true, result.natural)
+      assert.are.equal(16, result.numerical)
+      assert.is_true(#notify_calls >= 1)
+      assert.is_true(string.find(notify_calls[1].msg, 'y', 1, true) ~= nil)
+    end)
   end)
 
   describe('parse_number', function()
@@ -238,14 +327,37 @@ describe('utils', function()
       assert.are.equal(3.14, result)
     end)
 
-    it('should parse partial valid binary from mixed input', function()
-      local result = utils.parse_number('123', 2)
-      assert.are.equal(1, result)
-    end)
+    it(
+      'should return nil when mixed input is not a pure binary number',
+      function()
+        local result = utils.parse_number('123', 2)
+        assert.is_nil(result)
+      end
+    )
 
     it('should return nil for empty string', function()
       local result = utils.parse_number('', 10)
       assert.is_nil(result)
+    end)
+
+    it('should return nil for embedded digits at start in binary', function()
+      assert.is_nil(utils.parse_number('abc01', 2))
+    end)
+
+    it('should return nil for trailing non-digits in decimal', function()
+      assert.is_nil(utils.parse_number('5xyz', 10))
+    end)
+
+    it('should return nil for leading non-digits in decimal', function()
+      assert.is_nil(utils.parse_number('foo-5bar', 10))
+    end)
+
+    it('should return nil for embedded 0x prefix in hex', function()
+      assert.is_nil(utils.parse_number('hello0x2A', 16))
+    end)
+
+    it('should return nil for mixed content in octal', function()
+      assert.is_nil(utils.parse_number('77abc', 8))
     end)
   end)
 
@@ -301,6 +413,39 @@ describe('utils', function()
     it('should return empty for empty input', function()
       local result = utils.trim_leading_and_trailing_whitespace('')
       assert.are.equal('', result)
+    end)
+
+    it('should strip NBSP (U+00A0)', function()
+      local result =
+        utils.trim_leading_and_trailing_whitespace('\194\160hello\194\160')
+      assert.are.equal('hello', result)
+    end)
+
+    it('should strip ideographic space (U+3000)', function()
+      local result = utils.trim_leading_and_trailing_whitespace(
+        '\227\128\128hello\227\128\128'
+      )
+      assert.are.equal('hello', result)
+    end)
+
+    it('should strip line separator (U+2028)', function()
+      local result = utils.trim_leading_and_trailing_whitespace(
+        '\226\128\168hello\226\128\168'
+      )
+      assert.are.equal('hello', result)
+    end)
+
+    it('should strip NEL (U+0085)', function()
+      local result =
+        utils.trim_leading_and_trailing_whitespace('\194\133hello\194\133')
+      assert.are.equal('hello', result)
+    end)
+
+    it('should strip mixed ASCII and Unicode whitespace', function()
+      local result = utils.trim_leading_and_trailing_whitespace(
+        ' \194\160\t hello \194\160 '
+      )
+      assert.are.equal('hello', result)
     end)
   end)
 
@@ -457,13 +602,33 @@ describe('utils', function()
       end
     end)
 
-    it('should handle punctuation at start', function()
+    it('should parse leading minus with digits as signed number', function()
       local result = utils.parse_natural_segments('-123')
-      assert.are.equal(2, #result)
-      assert.are.equal('-', result[1].text)
-      assert.are.equal(true, result[1].is_punctuation)
-      assert.are.equal('123', result[2].text)
-      assert.are.equal(true, result[2].is_number)
+      assert.are.equal(1, #result)
+      assert.are.equal('-123', result[1].text)
+      assert.are.equal(true, result[1].is_number)
+      assert.are.equal(false, result[1].is_punctuation)
+    end)
+
+    it(
+      'should keep leading minus as punctuation when not followed by digit',
+      function()
+        local result = utils.parse_natural_segments('-abc')
+        assert.are.equal(2, #result)
+        assert.are.equal('-', result[1].text)
+        assert.are.equal(true, result[1].is_punctuation)
+        assert.are.equal('abc', result[2].text)
+      end
+    )
+
+    it('should treat mid-string dash as separator, not sign', function()
+      local result = utils.parse_natural_segments('a-5')
+      assert.are.equal(3, #result)
+      assert.are.equal('a', result[1].text)
+      assert.are.equal('-', result[2].text)
+      assert.are.equal(true, result[2].is_punctuation)
+      assert.are.equal('5', result[3].text)
+      assert.are.equal(true, result[3].is_number)
     end)
 
     it('should treat non-ASCII bytes as punctuation', function()
@@ -650,8 +815,12 @@ describe('utils', function()
       assert.is_false(utils.is_pure_number('.'))
     end)
 
-    it('should return false for leading decimal without zero', function()
-      assert.is_false(utils.is_pure_number('.5'))
+    it('should return true for leading decimal without zero', function()
+      assert.is_true(utils.is_pure_number('.5'))
+    end)
+
+    it('should return true for negative leading decimal', function()
+      assert.is_true(utils.is_pure_number('-.5'))
     end)
 
     it('should return true for trailing decimal', function()
@@ -762,16 +931,24 @@ describe('utils', function()
       assert.is_true(utils.math_compare('abc', 'def'))
     end)
 
-    it('should treat empty string as 0 when compared with positive', function()
-      assert.is_true(utils.math_compare('', '5'))
+    it('should sort empty strings after positive numbers', function()
+      assert.is_false(utils.math_compare('', '5'))
+      assert.is_true(utils.math_compare('5', ''))
     end)
 
-    it('should treat empty string as 0 when compared with negative', function()
+    it('should sort empty strings after negative numbers', function()
       assert.is_false(utils.math_compare('', '-5'))
+      assert.is_true(utils.math_compare('-5', ''))
     end)
 
     it('should return false when comparing two empty strings', function()
       assert.is_false(utils.math_compare('', ''))
+    end)
+
+    it('should order positives, negatives, and empties consistently', function()
+      local items = { '', '5', '-3', '', '0' }
+      table.sort(items, utils.math_compare)
+      assert.are.same({ '-3', '0', '5', '', '' }, items)
     end)
 
     it('should fall back to string comparison when one is invalid', function()

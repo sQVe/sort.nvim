@@ -122,6 +122,82 @@ describe('dot repeat functionality', function()
     end)
   end)
 
+  describe('config snapshot for dot-repeat (main-vps)', function()
+    local original_user_config
+
+    before_each(function()
+      local config = require('sort.config')
+      original_user_config = vim.deepcopy(config.get_user_config())
+      local op = require('sort.operator')
+      if op.reset_captured_options then
+        op.reset_captured_options()
+      end
+    end)
+
+    -- selene: allow(undefined_variable)
+    after_each(function()
+      local config = require('sort.config')
+      config.setup(original_user_config)
+      local op = require('sort.operator')
+      if op.reset_captured_options then
+        op.reset_captured_options()
+      end
+    end)
+
+    it(
+      'should use snapshot from invocation, not live config, on dot-repeat',
+      function()
+        local config = require('sort.config')
+        local op = require('sort.operator')
+        setup_buffer({ 'b, a, a, c', 'c, b, a, a' })
+
+        config.setup({ unique = false })
+
+        op.capture_options()
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        set_operator_marks(1, 1, 1, 10)
+        op.sort_operator('char', false)
+
+        local result = get_buffer_content()
+        assert.are.equal('a, a, b, c', result[1])
+
+        config.setup({ unique = true })
+
+        set_operator_marks(2, 1, 2, 10)
+        op.sort_operator('char', false)
+
+        result = get_buffer_content()
+        assert.are.equal('a, a, b, c', result[2])
+      end
+    )
+
+    it(
+      'should refresh snapshot on each new invocation (not dot-repeat)',
+      function()
+        local config = require('sort.config')
+        local op = require('sort.operator')
+        setup_buffer({ 'b, a, a, c', 'c, b, a, a' })
+
+        config.setup({ unique = false })
+        op.capture_options()
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+        set_operator_marks(1, 1, 1, 10)
+        op.sort_operator('char', false)
+
+        local result = get_buffer_content()
+        assert.are.equal('a, a, b, c', result[1])
+
+        config.setup({ unique = true })
+        op.capture_options()
+        set_operator_marks(2, 1, 2, 10)
+        op.sort_operator('char', false)
+
+        result = get_buffer_content()
+        assert.are.equal('a, b, c', result[2])
+      end
+    )
+  end)
+
   describe('dot repeat edge cases', function()
     it('should handle repeat after empty selection', function()
       setup_buffer('zebra apple banana')
