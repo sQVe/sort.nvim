@@ -60,6 +60,38 @@ describe('textobjects', function()
         assert.are.equal('aa,', selected)
       end
     )
+
+    it(
+      'skips empty leading segment when cursor is on the leading delimiter',
+      function()
+        setup_buffer(',a,b')
+        place_cursor(0)
+
+        local region = textobjects._find_sortable_region(false)
+
+        assert.is_not_nil(region)
+        assert.is_true(region.to.column >= region.from.column)
+        local selected =
+          string.sub(',a,b', region.from.column, region.to.column)
+        assert.are.equal('a', selected)
+      end
+    )
+
+    it(
+      'skips empty trailing segment when cursor is past the trailing delimiter',
+      function()
+        setup_buffer('a,b,')
+        place_cursor(4)
+
+        local region = textobjects._find_sortable_region(false)
+
+        assert.is_not_nil(region)
+        assert.is_true(region.to.column >= region.from.column)
+        local selected =
+          string.sub('a,b,', region.from.column, region.to.column)
+        assert.are.equal('b', selected)
+      end
+    )
   end)
 
   describe('_apply_selection', function()

@@ -61,16 +61,27 @@ function M._find_sortable_region(include_delimiters)
   end
 
   if segment_index == nil then
-    -- Cursor on a delimiter or past the last segment. Snap to the segment
-    -- whose end lies immediately before the cursor; fall back to the first.
+    -- Cursor on a delimiter or past the last segment. Empty boundary
+    -- segments (from leading/trailing delimiters) have finish < start and
+    -- must be skipped — otherwise the returned selection has to < from.
     for i = #segments, 1, -1 do
-      if segments[i].finish < col then
+      if
+        segments[i].finish >= segments[i].start and segments[i].finish < col
+      then
         segment_index = i
         break
       end
     end
     if segment_index == nil then
-      segment_index = 1
+      for i = 1, #segments do
+        if segments[i].finish >= segments[i].start then
+          segment_index = i
+          break
+        end
+      end
+    end
+    if segment_index == nil then
+      return nil
     end
   end
 
