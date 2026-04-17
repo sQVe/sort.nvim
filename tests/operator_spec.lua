@@ -927,4 +927,78 @@ describe('operator functionality', function()
       assert.are.equal('prefix zebra suffix', result[3])
     end)
   end)
+
+  describe('non-modifiable buffer (main-e3u)', function()
+    local notify_calls
+    local original_notify
+
+    before_each(function()
+      notify_calls = {}
+      original_notify = vim.notify
+      vim.notify = function(msg, level)
+        table.insert(notify_calls, { msg = msg, level = level })
+      end
+    end)
+
+    -- selene: allow(undefined_variable)
+    after_each(function()
+      vim.notify = original_notify
+      vim.bo.modifiable = true
+    end)
+
+    it('should notify and leave buffer unchanged when nomodifiable', function()
+      setup_buffer('zebra apple banana')
+      vim.bo.modifiable = false
+
+      set_operator_marks(1, 1, 1, 18)
+
+      local ok = pcall(operator.sort_operator, 'char', false)
+
+      assert.is_true(ok)
+
+      vim.bo.modifiable = true
+      local result = get_buffer_content()
+      assert.are.equal('zebra apple banana', result[1])
+
+      assert.is_true(#notify_calls >= 1)
+      local found_warn = false
+      for _, call in ipairs(notify_calls) do
+        if
+          call.level == vim.log.levels.WARN
+          and string.find(call.msg, 'modifiable', 1, true)
+        then
+          found_warn = true
+          break
+        end
+      end
+      assert.is_true(found_warn)
+    end)
+
+    it('should notify on visual mode sort when nomodifiable', function()
+      setup_buffer('zebra apple banana')
+      vim.bo.modifiable = false
+
+      set_visual_marks(1, 1, 1, 18)
+
+      local ok = pcall(operator.sort_operator, 'char', true)
+
+      assert.is_true(ok)
+
+      vim.bo.modifiable = true
+      local result = get_buffer_content()
+      assert.are.equal('zebra apple banana', result[1])
+
+      local found_warn = false
+      for _, call in ipairs(notify_calls) do
+        if
+          call.level == vim.log.levels.WARN
+          and string.find(call.msg, 'modifiable', 1, true)
+        then
+          found_warn = true
+          break
+        end
+      end
+      assert.is_true(found_warn)
+    end)
+  end)
 end)

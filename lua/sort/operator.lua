@@ -256,6 +256,11 @@ end
 --- @param motion_type string Motion type from operatorfunc
 --- @param from_visual boolean|nil Whether called from visual mode
 M.sort_operator = function(motion_type, from_visual)
+  if not vim.bo.modifiable then
+    vim.notify('Buffer is not modifiable', vim.log.levels.WARN)
+    return
+  end
+
   local start_pos, end_pos, is_visual_marks
 
   if from_visual then
