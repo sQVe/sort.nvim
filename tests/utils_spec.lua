@@ -789,8 +789,12 @@ describe('utils', function()
       assert.is_false(utils.is_pure_number('.'))
     end)
 
-    it('should return false for leading decimal without zero', function()
-      assert.is_false(utils.is_pure_number('.5'))
+    it('should return true for leading decimal without zero', function()
+      assert.is_true(utils.is_pure_number('.5'))
+    end)
+
+    it('should return true for negative leading decimal', function()
+      assert.is_true(utils.is_pure_number('-.5'))
     end)
 
     it('should return true for trailing decimal', function()

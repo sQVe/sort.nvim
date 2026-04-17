@@ -505,16 +505,25 @@ M.normalize_whitespace = function(
   return dominant_pattern
 end
 
---- Rejects '.5', accepts '0.5' and '5.'.
+--- Accepts optional sign, with digits before or after the decimal point,
+--- with optional scientific exponent. Requires at least one digit, so `.`
+--- alone and `e5` fail. `tonumber` is the final guard.
 --- @param str string
 --- @return boolean
 M.is_pure_number = function(str)
   if str == nil or str == '' then
     return false
   end
-  local has_basic_number = string.match(str, '^[%+%-]?%d+%.?%d*$') ~= nil
-  local has_scientific = string.match(str, '^[%+%-]?%d+%.?%d*[eE][%+%-]?%d+$')
-    ~= nil
+  -- Lua patterns have no alternation, so match the two mantissa shapes
+  -- separately: digits-first (`5`, `5.`, `5.5`) and dot-first (`.5`).
+  local digits_first = '[%+%-]?%d+%.?%d*'
+  local dot_first = '[%+%-]?%.%d+'
+  local has_basic_number = string.match(str, '^' .. digits_first .. '$') ~= nil
+    or string.match(str, '^' .. dot_first .. '$') ~= nil
+  local has_scientific = string.match(
+    str,
+    '^' .. digits_first .. '[eE][%+%-]?%d+$'
+  ) ~= nil or string.match(str, '^' .. dot_first .. '[eE][%+%-]?%d+$') ~= nil
   return (has_basic_number or has_scientific) and tonumber(str) ~= nil
 end
 
