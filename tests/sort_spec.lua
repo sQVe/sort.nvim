@@ -1446,7 +1446,7 @@ describe('sort', function()
       assert.are.equal(' -90 , -10 , 5 ', result)
     end)
 
-    it('should skip empty segments in detection', function()
+    it('should sort empty segments after numbers', function()
       local text = '-10,,-90,5'
       local options = {
         delimiter = nil,
@@ -1458,7 +1458,7 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('-90,-10,,5', result)
+      assert.are.equal('-90,-10,5,', result)
     end)
 
     it('should reverse mathematical sort correctly', function()
@@ -1551,7 +1551,7 @@ describe('sort', function()
       assert.are.equal('-1,-10,-90', result)
     end)
 
-    it('should handle empty segments as 0 in math sort', function()
+    it('should sort empty segments after numbers in math sort', function()
       local text = '-10,,-5,10'
       local options = {
         delimiter = nil,
@@ -1563,7 +1563,7 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      assert.are.equal('-10,-5,,10', result)
+      assert.are.equal('-10,-5,10,', result)
     end)
   end)
 
@@ -1664,7 +1664,7 @@ describe('sort', function()
       assert.are.equal('-1\n-10\n-90', result)
     end)
 
-    it('should handle empty lines as 0 in math sort', function()
+    it('should sort empty lines after numbers in math sort', function()
       local text = '-10\n\n-5\n10'
       local options = {
         delimiter = nil,
@@ -1676,7 +1676,7 @@ describe('sort', function()
       }
 
       local result = sort.line_sort_text(text, options)
-      assert.are.equal('-10\n-5\n\n10', result)
+      assert.are.equal('-10\n-5\n10\n', result)
     end)
   end)
 

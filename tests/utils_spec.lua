@@ -861,16 +861,24 @@ describe('utils', function()
       assert.is_true(utils.math_compare('abc', 'def'))
     end)
 
-    it('should treat empty string as 0 when compared with positive', function()
-      assert.is_true(utils.math_compare('', '5'))
+    it('should sort empty strings after positive numbers', function()
+      assert.is_false(utils.math_compare('', '5'))
+      assert.is_true(utils.math_compare('5', ''))
     end)
 
-    it('should treat empty string as 0 when compared with negative', function()
+    it('should sort empty strings after negative numbers', function()
       assert.is_false(utils.math_compare('', '-5'))
+      assert.is_true(utils.math_compare('-5', ''))
     end)
 
     it('should return false when comparing two empty strings', function()
       assert.is_false(utils.math_compare('', ''))
+    end)
+
+    it('should order positives, negatives, and empties consistently', function()
+      local items = { '', '5', '-3', '', '0' }
+      table.sort(items, utils.math_compare)
+      assert.are.same({ '-3', '0', '5', '', '' }, items)
     end)
 
     it('should fall back to string comparison when one is invalid', function()

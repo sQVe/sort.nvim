@@ -512,14 +512,22 @@ M.all_pure_numbers = function(items)
   return true
 end
 
+--- Empty strings sort after all numeric values so they cluster at one end
+--- instead of slotting between negatives and positives as coerced zeros.
 --- Falls back to string comparison if tonumber fails (should not occur when
 --- called via the sorting pipeline which pre-validates with all_pure_numbers).
 --- @param a string
 --- @param b string
 --- @return boolean
 M.math_compare = function(a, b)
-  local na = a == '' and 0 or tonumber(a)
-  local nb = b == '' and 0 or tonumber(b)
+  if a == '' then
+    return false
+  end
+  if b == '' then
+    return true
+  end
+  local na = tonumber(a)
+  local nb = tonumber(b)
   if na and nb then
     return na < nb
   end
