@@ -238,14 +238,37 @@ describe('utils', function()
       assert.are.equal(3.14, result)
     end)
 
-    it('should parse partial valid binary from mixed input', function()
-      local result = utils.parse_number('123', 2)
-      assert.are.equal(1, result)
-    end)
+    it(
+      'should return nil when mixed input is not a pure binary number',
+      function()
+        local result = utils.parse_number('123', 2)
+        assert.is_nil(result)
+      end
+    )
 
     it('should return nil for empty string', function()
       local result = utils.parse_number('', 10)
       assert.is_nil(result)
+    end)
+
+    it('should return nil for embedded digits at start in binary', function()
+      assert.is_nil(utils.parse_number('abc01', 2))
+    end)
+
+    it('should return nil for trailing non-digits in decimal', function()
+      assert.is_nil(utils.parse_number('5xyz', 10))
+    end)
+
+    it('should return nil for leading non-digits in decimal', function()
+      assert.is_nil(utils.parse_number('foo-5bar', 10))
+    end)
+
+    it('should return nil for embedded 0x prefix in hex', function()
+      assert.is_nil(utils.parse_number('hello0x2A', 16))
+    end)
+
+    it('should return nil for mixed content in octal', function()
+      assert.is_nil(utils.parse_number('77abc', 8))
     end)
   end)
 

@@ -89,19 +89,20 @@ end
 M.parse_number = function(text, base)
   base = base or 10
 
-  -- Define patterns for different number bases.
+  -- Anchored patterns: the whole input must be a valid number in the given base.
+  -- Unanchored patterns would match embedded digit runs, e.g. '5xyz' as 5.
   local patterns = {
-    [2] = '%-?[01]+',
-    [8] = '%-?[0-7]+',
-    [10] = '%-?[%d.]+',
-    [16] = '%-?0[xX]%x+',
+    [2] = '^%-?[01]+$',
+    [8] = '^%-?[0-7]+$',
+    [10] = '^%-?[%d.]+$',
+    [16] = '^%-?0[xX]%x+$',
   }
 
   local match = string.match(text, patterns[base] or patterns[10])
 
   -- For hexadecimal, also try pattern without 0x prefix.
   if base == 16 and not match then
-    match = string.match(text, '%-?%x+')
+    match = string.match(text, '^%-?%x+$')
   end
 
   return tonumber(match or '', base ~= 10 and base or nil)

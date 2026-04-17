@@ -545,8 +545,9 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      -- With numerical sorting, these are sorted by numeric value first, then alphabetically.
-      assert.are.equal('5b,10A,20A', result)
+      -- Items are not pure numbers (alpha suffix); parse_number returns nil,
+      -- so comparison falls back to case-insensitive string sort.
+      assert.are.equal('10a,20A,5B', result)
     end)
 
     it(
