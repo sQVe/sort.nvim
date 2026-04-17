@@ -185,5 +185,15 @@ describe('config', function()
 
       assert.are.equal(true, user_config.natural_sort)
     end)
+
+    it('should preserve prior keys across layered setup calls', function()
+      config.setup({ ignore_case = true })
+      config.setup({ unique = true })
+
+      local user_config = config.get_user_config()
+
+      assert.are.equal(true, user_config.ignore_case)
+      assert.are.equal(true, user_config.unique)
+    end)
   end)
 end)
