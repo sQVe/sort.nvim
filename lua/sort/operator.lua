@@ -3,6 +3,34 @@ local utils = require('sort.utils')
 
 local M = {}
 
+-- Snapshot of user options captured when the operator is invoked via a
+-- keymap. Dot-repeat calls the operatorfunc directly without re-running the
+-- keymap expression, so reading live config there would diverge from the
+-- invocation. Capturing here keeps vim-repeat semantics: `.` reproduces the
+-- action with the options active at first press.
+local captured_options = nil
+
+local function snapshot_user_options()
+  local config = require('sort.config')
+  local user_config = config.get_user_config()
+  return {
+    natural = user_config.natural_sort,
+    ignore_case = user_config.ignore_case,
+    unique = user_config.unique,
+  }
+end
+
+--- Capture the current config as a snapshot for subsequent sort_operator
+--- calls (including dot-repeat). Called by operator keymaps before g@ fires.
+M.capture_options = function()
+  captured_options = snapshot_user_options()
+end
+
+--- Clear the captured options snapshot. Test helper.
+M.reset_captured_options = function()
+  captured_options = nil
+end
+
 --- Get text based on motion type and marks.
 --- @param motion_type string Motion type ('line', 'char', 'block')
 --- @param start_pos table Start position [row, col]
@@ -313,11 +341,10 @@ M.sort_operator = function(motion_type, from_visual)
 
   local options = utils.parse_arguments('', '')
 
-  local config = require('sort.config')
-  local user_config = config.get_user_config()
-  options.natural = user_config.natural_sort
-  options.ignore_case = user_config.ignore_case
-  options.unique = user_config.unique
+  local snapshot = captured_options or snapshot_user_options()
+  options.natural = snapshot.natural
+  options.ignore_case = snapshot.ignore_case
+  options.unique = snapshot.unique
 
   local sorted_text
   local lines = vim.split(text, '\n')
