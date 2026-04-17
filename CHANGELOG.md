@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dot-repeat (`.`) of the sort operator uses the configuration active at the first invocation instead of reading live config at repeat time.
 - The sort operator warns and aborts instead of erroring when the buffer is non-modifiable.
 - Multi-line character motions are only promoted to line motions when both boundaries are line-shaped, preserving partial selections that span 3+ lines.
-- Whitespace trimming now handles Unicode whitespace (NBSP, ideographic space, line/paragraph separators) rather than only ASCII `%s`.
+- Whitespace trimming now handles Unicode whitespace (NEL, NBSP, ideographic space, line/paragraph separators, em/en quads, etc.) rather than only ASCII `%s`.
+- Inner/around sortable-region text objects (`is`, `as`) snap deterministically to the nearest non-empty segment when the cursor is on a delimiter or past the last segment, and preserve the visual selection when invoked from visual mode.
 - Numeric sort orders empty segments after numbers instead of coercing them to zero.
 - `:Sort` flag parsing now binds flag letters (`b`, `n`, `o`, `x`, `i`, `u`, `z`) first and warns on unknown characters; combining `s`/`t` with other flags no longer silently consumes them as delimiters.
 - `parse_number` requires the whole input to be a valid number for its base — `5xyz` no longer parses as `5`.
