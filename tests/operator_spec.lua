@@ -1001,4 +1001,39 @@ describe('operator functionality', function()
       assert.is_true(found_warn)
     end)
   end)
+
+  describe('motion promotion heuristic (main-qbw)', function()
+    it(
+      'should preserve partial end on line 3 for char motion across 3+ lines',
+      function()
+        setup_buffer({ 'zebra', 'apple', 'banana TAIL' })
+
+        -- Char motion from line 1 col 1 to line 3 col 6 (partial — only 'banana').
+        set_operator_marks(1, 1, 3, 6)
+
+        operator.sort_operator('char', false)
+
+        local result = get_buffer_content()
+        -- Line 3 must retain its ' TAIL' suffix; without the fix, the
+        -- selection was promoted to line mode and line 3 was sorted as a
+        -- whole, replacing it with another line's content.
+        assert.are.equal('banana TAIL', result[3])
+      end
+    )
+
+    it(
+      'should still treat full-line-to-full-line char motion as line mode',
+      function()
+        setup_buffer({ 'zebra', 'apple', 'banana' })
+
+        -- Char motion covering all three full lines.
+        set_operator_marks(1, 1, 3, 6)
+
+        operator.sort_operator('char', false)
+
+        local result = get_buffer_content()
+        assert.are.same({ 'apple', 'banana', 'zebra' }, result)
+      end
+    )
+  end)
 end)

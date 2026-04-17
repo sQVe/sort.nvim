@@ -313,20 +313,11 @@ M.sort_operator = function(motion_type, from_visual)
       local ends_at_line_end = end_pos[2] >= string.len(last_line) - 1
         or string.match(after_selection, '^[%s,;%]%)%}]*$')
 
-      -- For selections spanning 3+ lines, be more lenient - treat as line motion
-      -- if at least one boundary looks like a line boundary. This handles text
-      -- objects like `ii` (inside indent) that may not start at column 0 but
-      -- still represent a logical line selection.
-      local spans_many_lines = (end_pos[1] - start_pos[1]) >= 2
-
-      -- Treat as line motion if:
-      -- 1. "Perfect lines" selection (starts at beginning, ends at line end)
-      -- 2. Multi-line text objects that cover mostly complete lines
-      local is_perfect_lines = starts_at_line_beginning and ends_at_line_end
-      local is_multiline_block = spans_many_lines
-        and (starts_at_line_beginning or ends_at_line_end)
-
-      if is_perfect_lines or is_multiline_block then
+      -- Promote to line motion only when BOTH boundaries look line-shaped.
+      -- A one-sided match (e.g. starts at col 0 but ends mid-line) is a
+      -- deliberate partial selection — widening it silently would discard
+      -- characters the user intended to keep.
+      if starts_at_line_beginning and ends_at_line_end then
         effective_motion_type = 'line'
       end
     end
