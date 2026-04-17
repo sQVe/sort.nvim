@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-04-17
+
+### Fixed
+
+- Delimiter sort now applies a uniform whitespace policy: the input's outer whitespace is preserved, interior gaps collapse to the dominant pattern, and spacing no longer depends on which item lands at each boundary.
+- Delimiter sort drops the structural empty segment at the leading boundary, so inputs like `,a,b` sort to `,a,b` instead of gaining duplicate delimiters.
+- Delimiter sort now treats magic Lua pattern characters (`(`, `)`, `.`, `%`, `+`, `*`, `?`, `^`, `$`, `-`) as literal delimiters.
+- Dot-repeat (`.`) of the sort operator uses the configuration active at the first invocation instead of reading live config at repeat time.
+- The sort operator warns and aborts instead of erroring when the buffer is non-modifiable.
+- Multi-line character motions are only promoted to line motions when both boundaries are line-shaped, preserving partial selections that span 3+ lines.
+- Whitespace trimming now handles Unicode whitespace (NBSP, ideographic space, line/paragraph separators) rather than only ASCII `%s`.
+- Numeric sort orders empty segments after numbers instead of coercing them to zero.
+- `:Sort` flag parsing now binds flag letters (`b`, `n`, `o`, `x`, `i`, `u`, `z`) first and warns on unknown characters; combining `s`/`t` with other flags no longer silently consumes them as delimiters.
+- `parse_number` requires the whole input to be a valid number for its base — `5xyz` no longer parses as `5`.
+- `is_pure_number` accepts leading-decimal numbers like `.5` and `-.5`.
+- Natural-sort parser treats a leading `-` before digits as a sign, so `-10, -5` sorts numerically in mixed lists.
+- `config.setup` validates override types (delimiters, mappings, whitespace, booleans) and warns on invalid values instead of silently accepting them.
+- `config.setup` no longer mutates the caller's overrides table.
+
 ## [2.4.0] - 2026-01-28
 
 ### Added
@@ -126,7 +145,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keybinding examples with detailed explanations.
 - Documentation for numerical sorting options.
 
-[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/sQVe/sort.nvim/compare/v2.4.1...HEAD
+[2.4.1]: https://github.com/sQVe/sort.nvim/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/sQVe/sort.nvim/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/sQVe/sort.nvim/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/sQVe/sort.nvim/compare/v2.2.0...v2.2.1
