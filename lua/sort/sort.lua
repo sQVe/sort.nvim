@@ -128,6 +128,12 @@ M.delimiter_sort = function(text, options)
     end
   end
 
+  -- Capture outer whitespace from the original input. When items reorder,
+  -- the outer leading/trailing belongs to the text, not to whichever item
+  -- was originally at position 1/N — so we re-apply it after normalization.
+  local outer_leading_ws = items[1] and items[1].leading_ws or ''
+  local outer_trailing_ws = items[#items] and items[#items].trailing_ws or ''
+
   -- Check if sorting will change the order.
   local original_order = {}
   for i, item in ipairs(items) do
@@ -222,20 +228,30 @@ M.delimiter_sort = function(text, options)
       top_translated_delimiter
     )
 
-    -- Normalize whitespace for each item.
-    for i, item in ipairs(items) do
+    -- Normalize whitespace for each item. Every item is treated identically:
+    -- short leading whitespace is replaced with the dominant pattern; whitespace
+    -- at or above the alignment threshold is preserved as deliberate column
+    -- alignment. trailing_ws is cleared so inter-item spacing lives entirely in
+    -- the next item's leading_ws, yielding an identical gap between every pair.
+    for _, item in ipairs(items) do
       if item.trimmed ~= '' then
-        -- For comma-separated values, first item should have no leading whitespace.
-        if i == 1 and top_translated_delimiter == ',' then
-          item.leading_ws = ''
-        else
-          item.leading_ws = utils.normalize_whitespace(
-            item.leading_ws,
-            dominant_pattern,
-            alignment_threshold
-          )
-        end
+        item.leading_ws = utils.normalize_whitespace(
+          item.leading_ws,
+          dominant_pattern,
+          alignment_threshold
+        )
+        item.trailing_ws = ''
       end
+    end
+
+    -- Re-apply the input's outer leading/trailing to the boundary items so
+    -- input `'x,y'` does not gain leading whitespace and input `' x,y '` keeps
+    -- its outer whitespace regardless of which item lands at each end.
+    if items[1] and items[1].trimmed ~= '' then
+      items[1].leading_ws = outer_leading_ws
+    end
+    if items[#items] and items[#items].trimmed ~= '' then
+      items[#items].trailing_ws = outer_trailing_ws
     end
   end
 

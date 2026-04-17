@@ -424,8 +424,10 @@ describe('sort', function()
       }
 
       local result = sort.delimiter_sort(text, options)
-      -- The actual result from implementation (whitespace preserved during sort).
-      assert.are.equal('apple\r,banana\t,cherry\n', result)
+      -- Per the whitespace policy: when order changes, inter-item trailing
+      -- whitespace is normalized away. Only the input's outer trailing is
+      -- preserved — here the original last item (banana) had trailing '\t'.
+      assert.are.equal('apple,banana,cherry\t', result)
     end)
 
     it('should handle whitespace-only segments', function()
@@ -581,6 +583,49 @@ describe('sort', function()
 
         local result = sort.delimiter_sort(text, options)
         assert.are.equal('b, d,   e, f, l', result)
+      end
+    )
+
+    it(
+      'should apply uniform whitespace policy regardless of item position (main-jla)',
+      function()
+        local options = {
+          delimiter = ',',
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
+
+        -- Input with inconsistent internal spacing collapses to a uniform gap;
+        -- no outer whitespace is introduced when the input had none.
+        assert.are.equal('a, b, c', sort.delimiter_sort('c , a , b', options))
+
+        -- Input's outer whitespace is preserved; internal gap is uniform and
+        -- independent of which item ends up at each boundary.
+        assert.are.equal(' a, b, c ', sort.delimiter_sort(' c,b,a ', options))
+      end
+    )
+
+    it(
+      'should treat first, middle, and last items identically (main-jla)',
+      function()
+        local options = {
+          delimiter = ',',
+          ignore_case = false,
+          numerical = nil,
+          reverse = false,
+          unique = false,
+        }
+
+        -- Every item in the input has shape ` x ` (single space on both
+        -- sides) and outer whitespace is a single space on each end. Under
+        -- the uniform policy, every inter-item gap is the same and the outer
+        -- whitespace on the output matches the input.
+        assert.are.equal(
+          ' a, b, c ',
+          sort.delimiter_sort(' c , a , b ', options)
+        )
       end
     )
   end)

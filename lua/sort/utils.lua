@@ -352,6 +352,21 @@ M.natural_compare = function(a, b, ignore_case)
 end
 
 --- Normalize whitespace for a segment based on configuration.
+---
+--- Whitespace policy for delimiter_sort:
+---   - Items carry their own leading_ws and trailing_ws; whitespace "moves with
+---     the item" when items reorder.
+---   - When order changes (and natural_sort is disabled), every item's
+---     leading_ws is passed through this function uniformly — no positional
+---     special-casing. Natural sort preserves whitespace verbatim to protect
+---     intentional column alignment.
+---   - This function only normalizes leading_ws. The caller zeros trailing_ws
+---     directly so all inter-item whitespace lives in the next item's
+---     leading_ws.
+---   - Whitespace at or above `alignment_threshold` chars is preserved as
+---     deliberate column alignment. Shorter whitespace is replaced with the
+---     dominant pattern detected across items.
+---
 --- @param original_whitespace string
 --- @param dominant_pattern string
 --- @param alignment_threshold number
